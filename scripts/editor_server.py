@@ -17,6 +17,7 @@ import webbrowser
 from zoneinfo import ZoneInfo
 from PIL import Image
 from build_html import build_payload, write_payload
+from tree_json import FIELDS, load_translations
 from editor_validation import validate_document
 
 MAX_BODY = 38 * 1024 * 1024
@@ -89,6 +90,8 @@ class EditorHandler(SimpleHTTPRequestHandler):
             return self.json_response(500, {'error': 'Nie udało się zapisać zmian. Oryginalne dane zachowano; spróbuj ponownie.'})
 
     def save_person(self, request):
+        translations_path=self.root/'family-translations.json'
+        translations=load_translations(self.root)
         data_path = self.root/'family-tree.json'
         review_path = self.root/'family-tree-review.json'
         data = json.loads(data_path.read_text())
@@ -104,6 +107,15 @@ class EditorHandler(SimpleHTTPRequestHandler):
         old_marriages = [r for r in data['relationships'] if pid in r['personIds']]
         if old_marriages != request.get('baseMarriages', old_marriages):
             raise Conflict('Powiązania tej osoby zmieniły się. Odśwież stronę przed ponowną edycją.')
+        entry=request.get('translation')
+        if entry:
+            lang=entry.get('language')
+            if translations.get(lang,{}).get('people',{}).get(pid)!=request.get('baseTranslation'):
+                raise Conflict('Dane zmieniły się w innym oknie. Odśwież stronę przed zapisaniem.')
+            source={key:original.get(key) for key in FIELDS}
+            if lang not in ('ru','en') or entry.get('source')!=source or not isinstance(entry.get('values'),dict) or not set(entry['values'])<=set(FIELDS):
+                raise ValueError('Nieprawidłowe tłumaczenie.')
+            translations.setdefault(lang,{'language':lang,'people':{},'issues':{}})['people'][pid]={'source':source,'values':entry['values']}
         photo_bytes = None
         new_photo = None
         if request.get('photo'):
@@ -168,10 +180,14 @@ class EditorHandler(SimpleHTTPRequestHandler):
                 payload = build_payload(self.root, data, review)
             except AssertionError:
                 raise ValueError('Powiązania wskazują sprzeczne pokolenia. Sprawdź rodziców, rodzeństwo i małżeństwa.')
+            payload['translations']=translations
+            payload['translationSha256']=hashlib.sha256(json.dumps(translations,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
             review['disconnectedPeople'] = payload['disconnectedPeople']
             review['summary']['allPeopleConnectedToRoot'] = not payload['disconnectedPeople']
             backup = self.root/'backups/editor'/now.strftime('%Y%m%d-%H%M%S-%f')
             backup.mkdir(parents=True)
+            translations_before=translations_path.read_bytes() if translations_path.exists() else None
+            if translations_before is not None:(backup/'family-translations.json').write_bytes(translations_before)
             (backup/'family-tree.json').write_bytes(data_path.read_bytes())
             (backup/'family-tree-review.json').write_bytes(review_path.read_bytes())
             review['htmlStatus'].update(status='aktualny', sourceSha256=payload['sourceSha256'],
@@ -179,10 +195,14 @@ class EditorHandler(SimpleHTTPRequestHandler):
             atomic_json(data_path, data)
             try:
                 atomic_json(review_path, review)
+                if entry:atomic_json(translations_path,translations)
                 write_payload(self.root, payload)
             except Exception:
                 data_path.write_bytes((backup/'family-tree.json').read_bytes())
                 review_path.write_bytes((backup/'family-tree-review.json').read_bytes())
+                if entry:
+                    if translations_before is None:translations_path.unlink(missing_ok=True)
+                    else:translations_path.write_bytes(translations_before)
                 raise
             self.server.payload = payload
             return payload

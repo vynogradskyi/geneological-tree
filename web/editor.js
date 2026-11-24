@@ -1,4 +1,6 @@
 window.GenealogyEditor = (() => {
+  const I=window.GenealogyI18n;
+  const t=(key,values)=>I.t(key,values);
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const lines=value=>String(value).split('\n').map(v=>v.trim()).filter(Boolean);
   const nullable=value=>value.trim()||null;
@@ -30,7 +32,7 @@ window.GenealogyEditor = (() => {
       if(api.state().isExample)mode.textContent='Przykład demonstracyjny · '+mode.textContent;
       editButton.hidden=!canEdit()||editing;
       exportButton.hidden=!canEdit()||storage.mode==='project';
-      document.getElementById('download-stale').hidden=!canEdit()||!storage.staleBackup;
+      document.getElementById('download-stale').hidden=!canEdit()||!storage.staleBackup;I.dom();
     }
     exportButton.onclick=async()=>{if(!canEdit())return;exportButton.disabled=true;try{await storage.exportChanges();}catch(error){api.message(error.message);}finally{exportButton.disabled=false;}};
     document.getElementById('download-stale').onclick=()=>{if(canEdit())storage.exportChanges(true);};
@@ -42,7 +44,8 @@ window.GenealogyEditor = (() => {
     document.getElementById('close-person').addEventListener('click',e=>{if(editing&&dirty){e.stopImmediatePropagation();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}},{capture:true});
     editButton.onclick=()=>{
       if(!canEdit())return;
-      const data=api.state().data,p=structuredClone(data.people.find(p=>p.id===api.selected())),basePerson=structuredClone(p),baseMarriages=structuredClone(data.relationships.filter(r=>r.personIds.includes(p.id)));
+      const data=api.state().data,basePerson=structuredClone(data.people.find(p=>p.id===api.selected())),p=structuredClone(api.display?api.display(basePerson):basePerson),language=I.language,baseMarriages=structuredClone(data.relationships.filter(r=>r.personIds.includes(p.id)));
+      const baseTranslation=structuredClone(api.state().translations?.[language]?.people?.[p.id]||null);
       let upload=null,removePhoto=false,uploadBusy=false;
       editing=true;dirty=false;editButton.hidden=true;
       const sorted=data.people.filter(other=>other.id!==p.id).sort((a,b)=>api.name(a).localeCompare(api.name(b),'pl'));
@@ -50,7 +53,7 @@ window.GenealogyEditor = (() => {
       const fieldset=(legend,body)=>`<fieldset><legend>${legend}</legend><div class="edit-grid">${body}</div></fieldset>`;
       const dateFields=prefix=>input(prefix+'Date',prefix==='birth'?'Data urodzenia':'Data śmierci',p[prefix+'Date'],'placeholder="RRRR, RRRR-MM lub RRRR-MM-DD" inputmode="numeric"')+input(prefix+'Year','Rok',p[prefix+'Year'],'type="number" min="1" max="9999"')+input(prefix+'DateNote','Opis przybliżonej daty',p[prefix+'DateNote'],'placeholder="np. przed 1917, koniec lat 90."');
       const placeFields=prefix=>['city','region','country'].map((part,i)=>input(prefix+'.'+part,['Miasto / wieś','Region / obwód','Kraj'][i],p[prefix][part])).join('');
-      content.innerHTML=`<form id="person-edit-form" class="edit-form"><h2 id="person-name">Edit · ${esc(api.name(p))}</h2><p class="edit-help">Dane wpisuj po polsku lub zatwierdzoną pisownią łacińską. Puste pole oznacza brak danych. Identyfikator osoby jest stały.</p><div id="edit-error" class="edit-error" role="alert" hidden></div>`+
+      content.innerHTML=`<form id="person-edit-form" class="edit-form"><h2 id="person-name">${esc(t('Edit'))} · ${esc(api.name(p))}</h2><p class="edit-help">Dane wpisuj po polsku lub zatwierdzoną pisownią łacińską. Puste pole oznacza brak danych. Identyfikator osoby jest stały.</p><div id="edit-error" class="edit-error" role="alert" hidden></div>`+
         fieldset('Osoba',input('id','ID osoby',p.id,'readonly')+textFields.map(([key,label])=>input(key,label,p[key])).join('')+area('formerLastNames','Poprzednie nazwiska — jedno w wierszu',p.formerLastNames.join('\n'),2))+
         fieldset('Życie',`<label class="edit-field wide"><span>Status życia</span><select name="isLiving"><option value="" ${p.isLiving===null?'selected':''}>Nieustalony — ?</option><option value="true" ${p.isLiving===true?'selected':''}>Żyje — ...</option><option value="false" ${p.isLiving===false?'selected':''}>Osoba zmarła</option></select></label>`+dateFields('birth')+dateFields('death')+area('deathCircumstances','Okoliczności śmierci',p.deathCircumstances||'',2))+
         fieldset('Miejsce urodzenia',placeFields('birthPlace'))+fieldset('Miejsce śmierci',placeFields('deathPlace'))+
@@ -60,8 +63,8 @@ window.GenealogyEditor = (() => {
         fieldset('Źródła i uwagi',area('sources','Źródła — jedno w wierszu',p.sources.join('\n'),5)+area('notes','Historia, uwagi, niepewne informacje',p.notes||'',6))+
         `<div class="edit-actions"><button id="cancel-edit" type="button">Anuluj</button><button id="save-person" class="primary" type="submit">Zapisz</button></div></form>`;
       const form=document.getElementById('person-edit-form'),error=document.getElementById('edit-error'),photoPreview=document.getElementById('edit-photo-preview');
-      const showError=message=>{error.hidden=false;error.textContent=message;error.scrollIntoView({block:'nearest',behavior:'smooth'});};
-      function addMarriage(r){const row=document.createElement('div');row.className='marriage-edit';row.dataset.id=r.id;const relationOptions=data.relationships.filter(other=>other.id!==r.id).map(other=>`<option value="${other.id}" ${other.id===r.previousRelationshipId?'selected':''}>${esc(other.id+' · '+other.personIds.map(id=>api.name(data.people.find(p=>p.id===id))).join(' / '))}</option>`).join('');row.innerHTML=`<div class="marriage-edit-header"><span>${esc(r.id)}</span><button type="button" class="remove-marriage">Usuń</button></div><div class="edit-grid"><label class="edit-field wide"><span>Małżonek / małżonka</span><select data-key="spouse">${options(r.personIds.find(id=>id!==p.id))}</select></label><label class="edit-field wide"><span>Status</span><select data-key="status">${[['','Nieustalony'],['trwa','Małżeństwo trwa'],['rozwiedzeni','Rozwiedzeni'],['zakończone','Zakończone']].map(([v,label])=>`<option value="${v}" ${v===(r.status||'')?'selected':''}>${label}</option>`).join('')}</select></label>${input('','Rok początku',r.startYear,'data-key="startYear" type="number" min="1" max="9999"')}${input('','Rok końca',r.endYear,'data-key="endYear" type="number" min="1" max="9999"')}<label class="edit-field wide"><span>Poprzednie małżeństwo</span><select data-key="previousRelationshipId"><option value="">? — brak danych</option>${relationOptions}</select></label><label class="edit-field wide"><span>Źródła — jedno w wierszu</span><textarea rows="2" data-key="sources">${esc(r.sources.join('\n'))}</textarea></label></div>`;row.querySelector('.remove-marriage').onclick=()=>{row.remove();dirty=true;};document.getElementById('marriage-rows').append(row);}
+      const showError=message=>{error.hidden=false;error.textContent=I.translate(message);error.scrollIntoView({block:'nearest',behavior:'smooth'});};
+      function addMarriage(r){const row=document.createElement('div');row.className='marriage-edit';row.dataset.id=r.id;const relationOptions=data.relationships.filter(other=>other.id!==r.id).map(other=>`<option value="${other.id}" ${other.id===r.previousRelationshipId?'selected':''}>${esc(other.id+' · '+other.personIds.map(id=>api.name(data.people.find(p=>p.id===id))).join(' / '))}</option>`).join('');row.innerHTML=`<div class="marriage-edit-header"><span>${esc(r.id)}</span><button type="button" class="remove-marriage">Usuń</button></div><div class="edit-grid"><label class="edit-field wide"><span>Małżonek / małżonka</span><select data-key="spouse">${options(r.personIds.find(id=>id!==p.id))}</select></label><label class="edit-field wide"><span>Status</span><select data-key="status">${[['','Nieustalony'],['trwa','Małżeństwo trwa'],['rozwiedzeni','Rozwiedzeni'],['zakończone','Zakończone']].map(([v,label])=>`<option value="${v}" ${v===(r.status||'')?'selected':''}>${label}</option>`).join('')}</select></label>${input('','Rok początku',r.startYear,'data-key="startYear" type="number" min="1" max="9999"')}${input('','Rok końca',r.endYear,'data-key="endYear" type="number" min="1" max="9999"')}<label class="edit-field wide"><span>Poprzednie małżeństwo</span><select data-key="previousRelationshipId"><option value="">? — brak danych</option>${relationOptions}</select></label><label class="edit-field wide"><span>Źródła — jedno w wierszu</span><textarea rows="2" data-key="sources">${esc(r.sources.join('\n'))}</textarea></label></div>`;row.querySelector('.remove-marriage').onclick=()=>{row.remove();dirty=true;};document.getElementById('marriage-rows').append(row);I.dom(row);}
       baseMarriages.forEach(addMarriage);let nextRelation=Math.max(0,...data.relationships.map(r=>Number(r.id.split('_')[1])))+1;
       document.getElementById('add-marriage').onclick=()=>{addMarriage({id:'relation_'+String(nextRelation++).padStart(4,'0'),personIds:[p.id,''],status:null,startYear:null,endYear:null,previousRelationshipId:null,sources:[]});dirty=true;};
       form.addEventListener('input',()=>{dirty=true;});form.addEventListener('change',()=>{dirty=true;});
@@ -80,10 +83,13 @@ window.GenealogyEditor = (() => {
         changed.isLiving=value('isLiving')===''?null:value('isLiving')==='true';for(const field of ['birthPlace','deathPlace'])for(const part of ['city','country','region'])changed[field][part]=nullable(value(field+'.'+part));
         for(const field of ['Mommy','Daddy'])changed[field]=value(field)||null;changed.siblings=[...form.elements.siblings.selectedOptions].map(o=>o.value);
         const marriages=[...document.querySelectorAll('.marriage-edit')].map(row=>{const get=key=>row.querySelector('[data-key="'+key+'"]').value;const original=baseMarriages.find(r=>r.id===row.dataset.id);const spouse=get('spouse');return{id:row.dataset.id,type:'małżeństwo',personIds:original?original.personIds.map(id=>id===p.id?id:spouse):[p.id,spouse],status:get('status')||null,startYear:get('startYear')?Number(get('startYear')):null,endYear:get('endYear')?Number(get('endYear')):null,previousRelationshipId:get('previousRelationshipId')||null,sources:lines(get('sources'))};});
-        validate(changed,data,marriages);save.disabled=true;save.textContent='Zapisywanie…';
-        const next=await storage.save({person:changed,basePerson,baseMarriages,marriages,photo:upload,removePhoto});stop();api.apply(next,p.id);api.message(storage.mode==='project'?'Zapisano dane i zdjęcie w folderze projektu.':'Zapisano w tej przeglądarce. „Pobierz zmiany” zapisze kopię do przeniesienia.');
-      }catch(e){showError(e.message);}finally{save.disabled=false;save.textContent='Zapisz';}};
-      dialog.scrollTop=0;form.querySelector('input:not([readonly])')?.focus({preventScroll:true});
+        let translation=null;
+        if(language!=='pl'){const values=Object.fromEntries(I.fields.map(key=>[key,structuredClone(changed[key]??null)]));translation={language,source:Object.fromEntries(I.fields.map(key=>[key,basePerson[key]??null])),values};for(const key of I.fields){if(Object.hasOwn(basePerson,key))changed[key]=structuredClone(basePerson[key]);else delete changed[key];}}
+        validate(changed,data,marriages);save.disabled=true;save.textContent=t('Zapisywanie…');
+        const next=await storage.save({person:changed,basePerson,baseMarriages,marriages,photo:upload,removePhoto,translation,baseTranslation});stop();api.apply(next,p.id);api.message(storage.mode==='project'?'Zapisano dane i zdjęcie w folderze projektu.':'Zapisano w tej przeglądarce. „Pobierz zmiany” zapisze kopię do przeniesienia.');
+      }catch(e){showError(e.message);}finally{save.disabled=false;save.textContent=t('Zapisz');}};
+      if(language!=='pl'){const help=document.createElement('p');help.className='issue';help.textContent=t('Edytujesz tłumaczenie. Daty, zdjęcia i powiązania są wspólne dla wszystkich języków.');form.prepend(help);}
+      I.dom(content);dialog.scrollTop=0;form.querySelector('input:not([readonly])')?.focus({preventScroll:true});
     };
     return {refresh,isDirty:()=>editing&&dirty};
   }

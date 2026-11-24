@@ -2,10 +2,12 @@
 import hashlib
 import json
 from pathlib import Path
+from tree_json import JSON_FILES
 import shutil
 
 ASSETS = (
-    'web/styles.css', 'web/app.js', 'web/dates.js',
+    'web/styles.css', 'web/app.js', 'web/dates.js', 'web/data-loader.js',
+    'web/i18n.js', 'web/locale-bundle.js', 'locales/pl.json', 'locales/ru.json', 'locales/en.json',
     'web/card-layout.js', 'web/viewer-storage.js', 'web/editor-storage.js',
     'web/editor.js', 'web/family-auth.js', 'web/family-users.json',
     'web/vendor/jszip.min.js', 'web/vendor/jszip-LICENSE.md', 'web/vendor/viz-global.js', 'web/vendor/viz-README.md',
@@ -20,8 +22,6 @@ def prepare_viewer(root, site):
     (site / 'web').mkdir(parents=True, exist_ok=True)
     html = (root / 'index.html').read_text()
     html = html.replace('<html lang="pl">', '<html lang="pl" data-family-prototype="true">')
-    html = html.replace('  <script defer src="web/data-loader.js"></script>',
-                        '  <script defer src="web/family-data.js"></script>')
     (site / 'index.html').write_text(html)
     for asset in ASSETS:
         destination = site / asset
@@ -31,8 +31,8 @@ def prepare_viewer(root, site):
 
 def write_manifest(site, photos):
     site = Path(site)
-    manifest = {'version': 1, 'files': {
+    manifest = {'version': 2, 'files': {
         name: hashlib.sha256((site / name).read_bytes()).hexdigest()
-        for name in sorted({DATA_FILE, *photos})
+        for name in sorted({DATA_FILE, *JSON_FILES, *photos})
     }}
     (site / MANIFEST).write_text(json.dumps(manifest, indent=2) + '\n')

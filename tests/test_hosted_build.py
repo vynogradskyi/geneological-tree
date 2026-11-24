@@ -60,6 +60,23 @@ class HostedBuildTest(unittest.TestCase):
         self.assertIn('id="download-pdf"', html)
         self.assertEqual(self.build(), (1, 1))
 
+    def test_migrates_legacy_snapshot_to_json_and_preserves_v2_bytes(self):
+        self.build()
+        manifest=json.loads((self.output/MANIFEST).read_text())
+        self.assertEqual(manifest['version'],2)
+        self.assertIn('data/tree.en.json',manifest['files'])
+        self.files={name:(self.output/name).read_bytes() for name in manifest['files']}
+        self.manifest=manifest
+        self.build()
+        for name,content in self.files.items():
+            self.assertEqual((self.output/name).read_bytes(),content)
+        altered=json.loads(self.files['data/tree.json'])
+        altered['data']['people'][0]['photo']=None
+        self.files['data/tree.json']=json.dumps(altered).encode()
+        self.manifest['files']['data/tree.json']=hashlib.sha256(self.files['data/tree.json']).hexdigest()
+        with self.assertRaisesRegex(ValueError,'does not match'):
+            self.build()
+
     def test_changed_or_missing_media_keeps_previous_build(self):
         self.build()
         previous = (self.output / self.photo).read_bytes()

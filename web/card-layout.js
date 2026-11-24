@@ -55,7 +55,7 @@ window.GenealogyCardLayout = (() => {
       toggle.setAttribute('aria-pressed',String(enabled));toggle.textContent=enabled?'Przesuwanie kart: włączone':'Przesuwanie kart: wyłączone';
       document.getElementById('viewport').classList.toggle('cards-draggable',enabled);
       undoButton.disabled=!undo.length||!!active;redoButton.disabled=!redo.length||!!active;resetButton.disabled=same(positions(model),basePositions())||!!active;
-      document.getElementById('layout-hint').textContent=enabled?'Przeciągnij kartę myszą w poziomie. Tło przesuwa drzewo.':'Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.';
+      document.getElementById('layout-hint').textContent=enabled?'Przeciągnij kartę myszą w poziomie. Tło przesuwa drzewo.':'Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.';window.GenealogyI18n?.dom();
     }
     function persist(){try{localStorage.setItem(key,JSON.stringify({version:1,signature,positions:positions(model),enabled}));}catch{onMessage('Układ działa, ale przeglądarka nie mogła go zapisać na później.');}}
     function apply(saved){

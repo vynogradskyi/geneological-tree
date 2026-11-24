@@ -100,4 +100,19 @@ class EditorPersistenceTest(unittest.TestCase):
         self.assertIsNone(next(p for p in self.data()['people'] if p['id']=='person_0055')['photo'])
         self.assertTrue((self.root/saved['photo']).exists(), 'Removing an assignment must preserve the photo file')
 
+    def test_translation_preserves_canonical_records_and_detects_conflict(self):
+        from tree_json import FIELDS
+        req=self.request('person_0007')
+        original=copy.deepcopy(req['person'])
+        source={key:original.get(key) for key in FIELDS}
+        values=copy.deepcopy(source);values['notes']='Русский тестовый перевод.'
+        req['translation']={'language':'ru','source':source,'values':values}
+        req['baseTranslation']=None
+        state=self.handler.save_person(req)
+        self.assertEqual(next(p for p in self.data()['people'] if p['id']==original['id']),original)
+        self.assertEqual(state['translations']['ru']['people'][original['id']]['values']['notes'],values['notes'])
+        self.assertTrue((self.root/'data/tree.ru.json').exists())
+        self.assertTrue((self.root/'family-translations.json').exists())
+        with self.assertRaises(Conflict):self.handler.save_person(req)
+
 if __name__=='__main__':unittest.main()

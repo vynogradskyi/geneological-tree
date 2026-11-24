@@ -2,7 +2,7 @@
 window.GenealogyFamily = (() => {
   const enabled = document.documentElement.dataset.familyPrototype === 'true';
   const sessionKey = 'genealogy-family-session:' + location.pathname;
-  let config = null, current = null;
+  let config = null, current = null, refreshView=()=>{};
   const publicUser = user => ({login:user.login, firstName:user.firstName, lastName:user.lastName});
   async function verify(password, user) {
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
@@ -32,9 +32,10 @@ window.GenealogyFamily = (() => {
     function refresh() {
       $('family-login').hidden=!!current;
       $('family-logout').hidden=!current;
-      $('family-greeting').textContent=current?`Witaj, ${current.firstName} ${current.lastName}`:'';
+      $('family-greeting').textContent=current?window.GenealogyI18n.t('Witaj, {firstName} {lastName}',current):'';window.GenealogyI18n.dom();
     }
     refresh();
+    refreshView=refresh;
     $('family-login').onclick=()=>{form.reset();$('family-login-error').hidden=true;dialog.showModal();$('family-username').focus();};
     $('family-close').onclick=()=>dialog.close();
     form.onsubmit=async event=>{
@@ -48,7 +49,7 @@ window.GenealogyFamily = (() => {
         current=publicUser(user);
         try {sessionStorage.setItem(sessionKey,JSON.stringify({login:user.login,fingerprint:user.passwordHash}));} catch {}
         form.reset();dialog.close();refresh();
-      } catch(e) {error.textContent=e.message;error.hidden=false;form.elements.password.value='';}
+      } catch(e) {error.textContent=window.GenealogyI18n.translate(e.message);error.hidden=false;form.elements.password.value='';}
       finally {submit.disabled=false;}
     };
     $('family-logout').onclick=async()=>{
@@ -57,5 +58,5 @@ window.GenealogyFamily = (() => {
       catch(error){message(error.message);}
     };
   }
-  return {enabled,ready,mount,verify,user:()=>current};
+  return {enabled,ready,mount,verify,refresh:()=>refreshView(),user:()=>current};
 })();

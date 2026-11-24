@@ -13,7 +13,8 @@ import tempfile
 from urllib.parse import quote, urlsplit
 from urllib.request import Request, urlopen
 
-from readonly_assets import DATA_FILE, MANIFEST, prepare_viewer
+from readonly_assets import DATA_FILE, MANIFEST, prepare_viewer, write_manifest
+from tree_json import JSON_FILES, write_json_payload, read_json_payload
 
 ROOT = Path(__file__).resolve().parents[1]
 PHOTO_PATH = re.compile(r'photos/[A-Za-z0-9_.-]+\.(?:png|jpg|jpeg|webp|gif)', re.I)
@@ -40,12 +41,12 @@ def build_hosted(source, output, root=ROOT, fetch=download):
     manifest_bytes = fetch(source + '/' + MANIFEST)
     manifest = json.loads(manifest_bytes)
     files = manifest.get('files', {})
-    if manifest.get('version') != 1 or not isinstance(files, dict) or DATA_FILE not in files:
+    if manifest.get('version') not in (1,2) or not isinstance(files, dict) or DATA_FILE not in files:
         raise ValueError('No supported hosted family snapshot. Bootstrap from local data first.')
     if len(files) > 2000:
         raise ValueError('Too many hosted files')
     for name, digest in files.items():
-        if name != DATA_FILE and not PHOTO_PATH.fullmatch(name):
+        if name != DATA_FILE and name not in JSON_FILES and not PHOTO_PATH.fullmatch(name):
             raise ValueError('Unexpected path in hosted data manifest')
         if not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest):
             raise ValueError('Invalid hosted SHA-256')
@@ -68,11 +69,23 @@ def build_hosted(source, output, root=ROOT, fetch=download):
         if payload.get('isExample') or not payload['data']['people']:
             raise ValueError('Refusing to replace the real site with an example')
         photos = {p['photo'] for p in payload['data']['people'] if p.get('photo')}
-        if set(files) != {DATA_FILE, *photos}:
+        expected={DATA_FILE,*photos}
+        if manifest['version']==2:expected.update(JSON_FILES)
+        if set(files) != expected:
             raise ValueError('Hosted manifest does not match the family snapshot')
         if set(payload['nodes']) != {p['id'] for p in payload['data']['people']}:
             raise ValueError('Hosted layout does not match people')
-        (site / MANIFEST).write_bytes(manifest_bytes)
+        if manifest['version']==1:
+            write_json_payload(site,payload)
+            write_manifest(site,photos)
+        else:
+            json_payload=read_json_payload(site)
+            if json_payload['data']!=payload['data'] or json_payload['nodes']!=payload['nodes']:
+                raise ValueError('JSON snapshot does not match offline snapshot')
+            for lang,localized in json_payload['translations'].items():
+                if localized.get('language')!=lang:
+                    raise ValueError('Wrong translation language')
+            (site / MANIFEST).write_bytes(manifest_bytes)
         if output.exists():
             if output.is_symlink():
                 raise ValueError('Output must not be a symlink')

@@ -24,3 +24,7 @@ ui-debug*.log
 /sources/
 /photos/*
 !/photos/.gitkeep
+
+# Local multilingual family text and generated JSON snapshots.
+/family-translations.json
+/data/tree*.json

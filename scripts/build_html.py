@@ -9,6 +9,7 @@ import json
 import os
 from PIL import Image, ImageOps
 from genealogy_layout import create_layout
+from tree_json import load_translations, write_json_payload
 
 def build_payload(root=None, data=None, review=None):
     ROOT = Path(root or Path(__file__).resolve().parents[1])
@@ -62,7 +63,10 @@ def build_payload(root=None, data=None, review=None):
         if pid not in connected:
             connected.add(pid)
             pending.extend(adjacency[pid] - connected)
+    translations=load_translations(ROOT)
     payload = {
+        'translations': translations,
+        'translationSha256': hashlib.sha256(json.dumps(translations,ensure_ascii=False,sort_keys=True).encode()).hexdigest(),
         'data': data, 'nodes': nodes, 'edges': edges, 'width': width, 'height': height,
         'ranks': ranks, 'branches': branches, 'direct': sorted(direct),
         'generations': generations, 'thumbnails': thumbnails,
@@ -83,6 +87,7 @@ def write_payload(root, payload):
     temp = target.with_suffix('.js.tmp')
     temp.write_text('window.GENEALOGY = ' + encoded + ';\n')
     temp.replace(target)
+    write_json_payload(root,payload)
 
 
 if __name__ == '__main__':
