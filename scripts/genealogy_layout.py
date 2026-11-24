@@ -2,6 +2,7 @@ from pathlib import Path
 from collections import deque, defaultdict
 import json
 import subprocess
+from card_metrics import METRICS
 
 def create_layout(data, output_dir):
     TMP = Path(output_dir)
@@ -71,7 +72,7 @@ def create_layout(data, output_dir):
     for p in people.values():
         if p['Daddy'] or p['Mommy']:
             families[(p['Daddy'],p['Mommy'])].append(p['id'])
-    dot = ['digraph tree {', 'graph [rankdir=TB, splines=spline, nodesep=0.21, ranksep=0.47, outputorder=edgesfirst, bgcolor="transparent", newrank=true];', 'node [shape=box, fixedsize=true, label="", width=2.083333, height=3.25];', 'edge [arrowhead=none, penwidth=1.2];']
+    dot = ['digraph tree {', 'graph [rankdir=TB, splines=spline, nodesep=0.21, ranksep=0.47, outputorder=edgesfirst, bgcolor="transparent", newrank=true];', f'node [shape=box, fixedsize=true, label="", width={METRICS["width"]/72:.8f}, height={METRICS["height"]/72:.8f}];', 'edge [arrowhead=none, penwidth=1.2];']
     for pid in sorted(people, key=lambda i:(branch[i]!='father',-rank[i],i)):
         dot.append(f'"{pid}";');rank_items[2*rank[pid]].append(pid)
     edge_kinds={}

@@ -8,7 +8,7 @@ import shutil
 ASSETS = (
     'web/styles.css', 'web/app.js', 'web/dates.js', 'web/data-loader.js',
     'web/i18n.js', 'web/locale-bundle.js', 'locales/pl.json', 'locales/ru.json', 'locales/en.json',
-    'web/card-layout.js', 'web/viewer-storage.js', 'web/editor-storage.js',
+    'web/card-metrics.js', 'web/card-view.js', 'web/card-layout.js', 'web/viewer-storage.js', 'web/editor-storage.js',
     'web/editor.js', 'web/family-auth.js', 'web/family-users.json',
     'web/vendor/jszip.min.js', 'web/vendor/jszip-LICENSE.md', 'web/vendor/viz-global.js', 'web/vendor/viz-README.md',
     'web/vendor/pdf-lib.min.js', 'web/vendor/pdf-lib-LICENSE.md',

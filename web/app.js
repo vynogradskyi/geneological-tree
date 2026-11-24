@@ -10,7 +10,12 @@
   let activeStorage=family?.enabled&&!familyUser?{mode:'readonly',state:structuredClone(seed)}:await GenealogyStorage.open(seed,{browserOnly:family?.enabled,account:familyUser?.login});
   const storage=new Proxy({}, {get:(_,key)=>typeof activeStorage[key]==='function'?activeStorage[key].bind(activeStorage):activeStorage[key]});
   const G = structuredClone(storage.state);
+  GenealogyCardView.normalize(G);
   window.GENEALOGY = G;
+  const metrics=window.GenealogyCardMetrics;
+  document.documentElement.style.setProperty('--card-width',metrics.width+'px');
+  document.documentElement.style.setProperty('--card-height',metrics.height+'px');
+  document.documentElement.style.setProperty('--card-photo',metrics.photo+'px');
   const people = new Map(G.data.people.map(p => [p.id, p]));
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -54,14 +59,14 @@
     const p=display(raw);
     const pos=G.nodes[p.id],button=document.createElement('button');
     button.type='button';button.className=`person-node branch-${G.branches[p.id]}`;button.dataset.person=p.id;
-    Object.assign(button.style,{left:pos.x+'px',top:pos.y+'px'});
+    Object.assign(button.style,{left:pos.x+'px',top:pos.y+'px',width:pos.w+'px',height:pos.h+'px'});button.classList.toggle('selected',state.selected===p.id);
     button.setAttribute('aria-label',`${shortName(p)}, ${life(p)}. Otwórz szczegóły`);
     const initials=[p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('') || '?';
     const image=G.thumbnails[p.id] ? `<img class="node-photo" src="${G.thumbnails[p.id]}" alt="" draggable="false">` : `<span class="node-photo node-placeholder"><b>${esc(initials)}</b><span>brak zdjęcia</span></span>`;
     const subtitles=extraLines(p);
-    button.innerHTML=image+`<span class="node-name">${esc(p.id==='person_0038'&&!p.firstName?t('Matka Anny'):p.firstName || t('Imię nieznane'))}</span>`+`<span class="node-name">${esc(p.lastName || (p.id==='person_0038'&&!p.firstName?t('imię nieznane'):p.title || ''))}</span>`+(subtitles.length?`<span class="node-subtitle">${esc(subtitles.filter(s=>s!==p.title).slice(0,2).join(' · '))}</span>`:'')+`<span class="node-dates">${esc(life(p))}</span>`;
+    button.innerHTML=image+`<span class="node-names"><span class="node-name">${esc(p.id==='person_0038'&&!p.firstName?t('Matka Anny'):p.firstName || t('Imię nieznane'))}</span>`+`<span class="node-name">${esc(p.lastName || (p.id==='person_0038'&&!p.firstName?t('imię nieznane'):p.title || ''))}</span></span>`+(subtitles.length?`<span class="node-subtitle">${esc(subtitles.filter(s=>s!==p.title).slice(0,2).join(' · '))}</span>`:'')+`<span class="node-dates">${esc(life(p))}</span>`;
     button.addEventListener('click',()=>{if(!dragWasMoved)openPerson(p.id);});
-    $('people').append(button);personButtons.set(p.id,button);
+    $('people').append(button);GenealogyCardView.fit(button);personButtons.set(p.id,button);
   }
   const author=fullName(people.get(G.data.rootPersonId));$('author-name').textContent=author;$('go-root').textContent=people.get(G.data.rootPersonId).firstName||'Osoba główna';document.title=t('Moje drzewo genealogiczne')+' · '+author;
   $('summary').textContent=I.summary(people.size,G.generations);
@@ -72,7 +77,7 @@
   let activeCard=null;
   const cardLayout=GenealogyCardLayout.create({model:G,onChange:updateLayoutView,onMessage:message,onActiveChange:id=>{if(activeCard)personButtons.get(activeCard)?.classList.remove('is-dragging');activeCard=id;if(id)personButtons.get(id)?.classList.add('is-dragging');viewport.classList.toggle('card-drag-active',!!id);}});
   function transform(){world.style.transform=`translate(${state.x}px,${state.y}px) scale(${state.scale})`;$('zoom-label').textContent=Math.round(state.scale*100)+'%';}
-  function focusPerson(id, scale=1){const n=G.nodes[id];state.scale=scale;state.x=viewport.clientWidth/2-(n.x+n.w/2)*scale;state.y=viewport.clientHeight*.72-(n.y+n.h/2)*scale;transform();}
+  function focusPerson(id, scale=1){const n=G.nodes[id];state.scale=scale;state.x=viewport.clientWidth/2-(n.x+n.w/2)*scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-n.h*scale/2-24)-(n.y+n.h/2)*scale;transform();}
   function zoom(factor,x=viewport.clientWidth/2,y=viewport.clientHeight/2){const old=state.scale;state.scale=Math.max(.12,Math.min(2.5,old*factor));state.x=x-(x-state.x)*state.scale/old;state.y=y-(y-state.y)*state.scale/old;transform();}
   $('zoom-in').onclick=()=>zoom(1.25);$('zoom-out').onclick=()=>zoom(.8);
   function goRoot(){
@@ -80,7 +85,7 @@
     const p=people.get(G.data.rootPersonId),nodes=[p.id,p.Mommy,p.Daddy].filter(Boolean).map(id=>G.nodes[id]);
     const left=Math.min(...nodes.map(n=>n.x)),right=Math.max(...nodes.map(n=>n.x+n.w));
     const root=G.nodes[p.id];state.scale=Math.min(.9,(viewport.clientWidth-34)/(right-left));
-    state.x=(viewport.clientWidth-(right-left)*state.scale)/2-left*state.scale;state.y=viewport.clientHeight*.72-(root.y+root.h/2)*state.scale;transform();
+    state.x=(viewport.clientWidth-(right-left)*state.scale)/2-left*state.scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-root.h*state.scale/2-24)-(root.y+root.h/2)*state.scale;transform();
   }
   $('go-root').onclick=goRoot;
   $('fit-tree').onclick=()=>{state.scale=Math.max(.08,Math.min((viewport.clientWidth-50)/G.width,(viewport.clientHeight-70)/G.height));state.x=(viewport.clientWidth-G.width*state.scale)/2;state.y=(viewport.clientHeight-G.height*state.scale)/2+12;transform();};
@@ -166,12 +171,12 @@
     $('download-stale')?.remove();
     $('save-mode').textContent='Wersja tylko do odczytu';
   }else editor=GenealogyEditor.mount({storage,isFamily:family?.enabled,canEdit:()=>!family?.enabled||!!familyUser,display,language:()=>I.language,state:()=>G,selected:()=>state.selected,name:fullName,photo:photoSource,open:openPerson,message,onView:callback=>{onPersonView=callback;},apply:(next,id)=>{
-    Object.assign(G,structuredClone(next));people.clear();G.data.people.forEach(p=>people.set(p.id,p));cardLayout.refresh();drawTree();focusPerson(id,state.scale);openPerson(id);
+    Object.assign(G,structuredClone(next));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));cardLayout.refresh();drawTree();focusPerson(id,state.scale);openPerson(id);
   }});
   family?.mount({canLeave:()=>!editor?.isDirty(),message,change:async user=>{
     const nextStorage=user?await GenealogyStorage.open(seed,{browserOnly:true,account:user.login}):{mode:'readonly',state:structuredClone(seed)};
     activeStorage=nextStorage;familyUser=user;
-    Object.assign(G,structuredClone(nextStorage.state));people.clear();G.data.people.forEach(p=>people.set(p.id,p));
+    Object.assign(G,structuredClone(nextStorage.state));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));
     cardLayout.refresh();drawTree();editor.refresh();
     if(personDialog.open&&state.selected)openPerson(state.selected);I.dom();
   }});
@@ -187,7 +192,8 @@
   search.addEventListener('input',()=>{const query=normal(search.value.trim());if(!query){closeSearch();return;}const matches=[...people.values()].filter(p=>normal([fullName(p),...Object.values(display(p)).filter(v=>typeof v==='string'),p.birthYear].filter(Boolean).join(' ')).includes(query));results.innerHTML=matches.length?matches.map(p=>`<button type="button" data-result="${p.id}">${esc(shortName(p))}<small>${esc(life(p))}${p.maidenName?' · z domu '+esc(p.maidenName):''}</small></button>`).join(''):'<p class="no-results">Nie znaleziono osoby.</p>';results.hidden=false;search.setAttribute('aria-expanded','true');I.dom(results);results.querySelectorAll('button').forEach(button=>button.onclick=()=>{const id=button.dataset.result;closeSearch();search.value='';focusPerson(id,1);openPerson(id);});});
   search.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();if(e.key==='ArrowDown'){e.preventDefault();results.querySelector('button')?.focus();}if(e.key==='Enter')results.querySelector('button')?.click();});
   document.addEventListener('click',e=>{if(!e.target.closest('.search-box'))closeSearch();});
-  window.addEventListener('resize',()=>{if(state.x>viewport.clientWidth)focusPerson(G.data.rootPersonId);});
+  let previousViewport={width:viewport.clientWidth,height:viewport.clientHeight};
+  window.addEventListener('resize',()=>{const next={width:viewport.clientWidth,height:viewport.clientHeight};state.x+=(next.width-previousViewport.width)/2;state.y+=(next.height-previousViewport.height)*.72;previousViewport=next;transform();});
   requestAnimationFrame(goRoot);
 
   async function exportPDF(){
@@ -201,13 +207,11 @@
       ctx.fillStyle='#24422e';ctx.font='42px Georgia';ctx.fillText(t('Moje drzewo genealogiczne'),pad,64);ctx.font='20px Arial';ctx.fillText(t('Autor/Autorka:')+' '+fullName(people.get(G.data.rootPersonId)),pad,99);ctx.font='16px Arial';ctx.fillStyle='#667867';ctx.fillText(I.summary(people.size,G.generations)+' · '+G.updatedOn,pad,129);
       ctx.save();ctx.translate(pad,top);
       for(const edge of G.edges){ctx.strokeStyle=edge.kind==='marriage'?'#997ca3':edge.kind==='sibling'?'#9b8a62':'#9eaea0';ctx.lineWidth=1.6;ctx.setLineDash(edge.kind==='marriage'?[3,4]:edge.kind==='sibling'?[7,5]:[]);for(const points of edge.paths){ctx.beginPath();ctx.moveTo(...points[0]);for(let i=1;i+2<points.length;i+=3)ctx.bezierCurveTo(...points[i],...points[i+1],...points[i+2]);ctx.stroke();}ctx.setLineDash([]);for(const label of edge.labels){ctx.font='11px Arial';ctx.textAlign='center';ctx.strokeStyle='#f8faf5';ctx.lineWidth=4;ctx.strokeText(t(label.text),label.x,label.y);ctx.fillStyle='#82618e';ctx.fillText(t(label.text),label.x,label.y);}}
-      function centered(value,x,y,maxWidth,size=14,bold=false){if(!value)return;ctx.font=`${bold?'bold ':''}${size}px Arial`;while(ctx.measureText(value).width>maxWidth&&size>8){size-=.4;ctx.font=`${bold?'bold ':''}${size}px Arial`;}ctx.textAlign='center';ctx.fillText(value,x,y);}
       for(const raw of people.values()){
-        const p=display(raw),n=G.nodes[p.id],cx=n.x+n.w/2;ctx.setLineDash([]);ctx.fillStyle='#fffefc';ctx.strokeStyle=p.id===G.data.rootPersonId?'#244f3c':'#ced8cb';ctx.lineWidth=p.id===G.data.rootPersonId?2:1;ctx.beginPath();ctx.roundRect(n.x,n.y,n.w,n.h,9);ctx.fill();ctx.stroke();ctx.fillStyle=G.branches[p.id]==='father'?'#537d98':'#5d8463';ctx.fillRect(n.x+8,n.y,n.w-16,3);
-        const image=images.get(p.id),px=cx-35,py=n.y+12,pw=70,ph=92;ctx.fillStyle='#f0f1eb';ctx.fillRect(px,py,pw,ph);
-        if(image){const s=Math.min(pw/image.width,ph/image.height);ctx.drawImage(image,px+(pw-image.width*s)/2,py+(ph-image.height*s)/2,image.width*s,image.height*s);}else{ctx.fillStyle='#98a995';centered([p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('')||'?',cx,py+70,120,32);}
-        ctx.fillStyle='#243c2e';centered(p.id==='person_0038'&&!p.firstName?t('Matka Anny'):p.firstName||t('Imię nieznane'),cx,n.y+121,130,14,true);centered(p.lastName||(p.id==='person_0038'&&!p.firstName?'imię nieznane':p.title||''),cx,n.y+139,130,14,Boolean(p.lastName));ctx.fillStyle='#65745f';extraLines(p).filter(t=>t!==p.title).slice(0,2).forEach((t,i)=>centered(t,cx,n.y+155+i*13,130,10.5));ctx.fillStyle='#243c2e';ctx.font='bold 12px Arial';if(ctx.measureText(life(p)).width<=130){centered(life(p),cx,n.y+189,130,12,true);}else{centered(t('ur. {value}',{value:GenealogyDates.part(p,'birth')}),cx,n.y+181,130,10.5,true);centered(t('zm. {value}',{value:GenealogyDates.part(p,'death')}),cx,n.y+194,130,10.5,true);}
-        const birthplace=t('Ur.: {value}',{value:place(p.birthPlace)});ctx.font='10.8px Arial';const placeLines=[];let line='';for(const word of birthplace.split(' ')){if(line&&ctx.measureText(line+' '+word).width>130){placeLines.push(line);line=word;}else line=line?line+' '+word:word;}if(line)placeLines.push(line);ctx.fillStyle='#65745f';placeLines.slice(0,2).forEach((t,i)=>centered(t,cx,n.y+207+i*13,130,10.8));
+        const p=display(raw);
+        GenealogyCardView.drawPDF(ctx,{node:G.nodes[p.id],branch:G.branches[p.id],root:p.id===G.data.rootPersonId,image:images.get(p.id),
+          names:[p.id==='person_0038'&&!p.firstName?t('Matka Anny'):p.firstName||t('Imię nieznane'),p.lastName||(p.id==='person_0038'&&!p.firstName?t('imię nieznane'):p.title||'')],
+          subtitle:extraLines(p).filter(text=>text!==p.title).slice(0,2).join(' · '),dates:life(p),initials:[p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('')||'?',noPhoto:t('brak zdjęcia')});
       }
       ctx.restore();ctx.textAlign='left';ctx.font='15px Arial';ctx.fillStyle='#65745f';ctx.fillText(t('Źródła: rozmowy rodzinne, dokumenty i podpisy fotografii. Szczegóły w kartach osób.'),pad,H-62);ctx.font='12px Arial';ctx.fillText(G.credits?.length?G.credits.map(c=>[c.author,c.sourcePage,c.license].filter(Boolean).join(' · ')).join('; '):t('Zdjęcia: materiały użytkownika.'),pad,H-39);ctx.fillText(t('? — brak danych. Wielokropek — osoba żyje według przekazanych informacji. Brak daty śmierci nie potwierdza statusu życia.'),pad,H-20);
       const pdf=await PDFLib.PDFDocument.create();pdf.setTitle(t('Moje drzewo genealogiczne')+' — '+fullName(people.get(G.data.rootPersonId)));pdf.setAuthor(fullName(people.get(G.data.rootPersonId)));pdf.setSubject(`Wersja robocza, ${people.size} osób, ${G.generations} pokoleń`);

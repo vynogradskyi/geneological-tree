@@ -22,3 +22,14 @@
 .account-menu{position:relative}.account-menu>summary{display:none}.account-menu-content{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}.account-menu:not([open])>.account-menu-content{display:flex}@media(max-width:760px){.account-menu>summary{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;cursor:pointer;border:1px solid var(--border);border-radius:9px;background:#fff;padding:8px 12px;list-style:none}.account-menu>summary::-webkit-details-marker{display:none}.account-menu:not([open])>.account-menu-content{display:none}.account-menu-content{position:absolute;left:0;top:52px;z-index:15;min-width:260px;max-width:calc(100vw - 40px);padding:16px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 35px #17351e20;justify-content:flex-start}.family-controls{width:100%}.account-menu-content button{min-height:44px}.language-control{min-height:44px}}
 
 @media(max-width:760px){.page-header{flex-wrap:nowrap;align-items:flex-start}.page-header .identity{flex:1}.header-actions{width:auto;max-width:none;flex-wrap:nowrap;gap:8px}.account-menu-content{left:auto;right:0}.page-header .primary{min-height:44px;min-width:44px;justify-content:center}.page-header .primary svg{display:block}.page-header .primary>span{display:none}}
+
+/* Cards follow the reference; geometry comes from card-metrics.js. */
+.person-node{width:var(--card-width,200px);height:var(--card-height,312px);padding:12px 12px 10px;border-radius:12px;background:#fff;box-shadow:0 2px 5px #1c332b0a;color:#23392f;text-align:center}
+.node-photo{width:var(--card-photo,174px);height:var(--card-photo,174px);object-fit:contain;object-position:center;background:#f0f2ec;border-radius:6px;margin:0 0 8px;flex:none}
+.node-names{display:block;max-width:100%;font-size:16px;line-height:19px;font-weight:700;flex:none}
+.node-name{font:inherit;line-height:inherit;overflow-wrap:anywhere;max-width:100%}
+.node-subtitle{font-size:12px;line-height:14px;margin-top:4px;color:#65736a;flex:none;overflow-wrap:anywhere}
+.node-dates{font-size:14px;line-height:16px;font-weight:600;margin-top:auto;max-width:100%;overflow-wrap:anywhere;padding-top:5px;flex:none}
+.node-placeholder b{font-size:44px}.node-placeholder span{font-size:12px}
+.person-node.selected{outline:3px solid #bd8d43;outline-offset:4px}.person-node.branch-root{border:2px solid var(--green)}
+@media(max-width:360px){.view-controls{flex-wrap:wrap}.zoom-controls{margin-left:auto}.layout-history{flex-wrap:wrap}}

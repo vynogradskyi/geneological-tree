@@ -2,7 +2,7 @@
 window.GenealogyCardLayout = (() => {
   const clone=value=>structuredClone(value);
   const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-  const GAP=18,LEFT=20,LIMIT=50;
+  const GAP=window.GenealogyCardMetrics?.gap||18,LEFT=20,LIMIT=50;
   const center=node=>node.x+node.w/2;
   function fingerprint(model){return JSON.stringify({nodes:Object.entries(model.nodes).sort(([a],[b])=>a.localeCompare(b)),edges:model.edges.map(e=>[e.kind,e.tail,e.head]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))),ranks:Object.entries(model.ranks).sort(([a],[b])=>a.localeCompare(b))});}
   function positions(model){return Object.fromEntries(Object.entries(model.nodes).map(([id,node])=>[id,node.x]));}
@@ -85,7 +85,8 @@ window.GenealogyCardLayout = (() => {
       }
     };
     // Position history is separate from the person editor and canonical family data.
-    let latest=cache?.signature===signature&&valid(cache.positions)?cache.positions:null;
+    const migrated=cache&&cache.signature!==signature?window.GenealogyCardView?.migratePlacement(cache,model):null;
+    let latest=cache?.signature===signature&&valid(cache.positions)?cache.positions:migrated&&valid(migrated)?migrated:null;
     function positionsFromCache(){return latest;}
     const change=onChange;onChange=()=>{latest=positions(model);change();};
     toggle.onclick=()=>api.toggle();undoButton.onclick=()=>api.undo();redoButton.onclick=()=>api.redo();resetButton.onclick=()=>api.reset();
