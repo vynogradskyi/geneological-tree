@@ -202,6 +202,9 @@ def main():
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--no-browser', action='store_true')
     args = parser.parse_args()
+    from init_example import initialize_example
+    if initialize_example(args.root):
+        print('Utworzono syntetyczne dane demonstracyjne w lokalnych plikach.', flush=True)
     handler = partial(EditorHandler, directory=str(args.root.resolve()))
     server = ThreadingHTTPServer(('127.0.0.1', args.port), handler)
     server.edit_lock = threading.Lock()

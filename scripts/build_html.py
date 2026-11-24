@@ -66,6 +66,7 @@ def build_payload(root=None, data=None, review=None):
         'data': data, 'nodes': nodes, 'edges': edges, 'width': width, 'height': height,
         'ranks': ranks, 'branches': branches, 'direct': sorted(direct),
         'generations': generations, 'thumbnails': thumbnails,
+        'isExample': review.get('isExample', False),
         'disconnectedPeople': sorted(set(adjacency) - connected),
         'issues': [q for q in review['issues'] if q['status'] == 'otwarte'],
         'credits': review.get('photoCredits', []),
@@ -86,6 +87,8 @@ def write_payload(root, payload):
 
 if __name__ == '__main__':
     root = Path(__file__).resolve().parents[1]
+    from init_example import initialize_example
+    initialize_example(root)
     payload = build_payload(root)
     write_payload(root, payload)
     print(f"HTML data refreshed: {len(payload['nodes'])} people, {len(payload['thumbnails'])} portraits, {payload['generations']} generations. No PDF generated.")

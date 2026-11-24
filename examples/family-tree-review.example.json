@@ -1,0 +1,19 @@
+{
+  "language": "pl",
+  "isExample": true,
+  "summary": {
+    "totalPeople": 3,
+    "allPeopleConnectedToRoot": true
+  },
+  "issues": [],
+  "photoCredits": [],
+  "renderStatus": {
+    "status": "Brak wygenerowanego PDF.",
+    "dataChangedSinceRender": false,
+    "pendingPersonIds": []
+  },
+  "htmlStatus": {
+    "status": "przykład demonstracyjny",
+    "portraitCount": 0
+  }
+}

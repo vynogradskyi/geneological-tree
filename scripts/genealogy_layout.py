@@ -137,11 +137,14 @@ def create_layout(data, output_dir):
         dot.append('}')
     # Boczne rodzeństwo pozostaje obok odpowiedniej gałęzi.
     for a,b in [('person_0013','person_0014'),('person_0014','person_0012'),('person_0017','person_0022'),('person_0022','person_0023'),('person_0049','person_0054')]:
-        dot.append(f'"{a}" -> "{b}" [style=invis,weight=50];')
+        if a in people and b in people and rank[a] == rank[b]:
+            dot.append(f'"{a}" -> "{b}" [style=invis,weight=50];')
     # Porządek prezentacji nie jest dodatkową więzią genealogiczną.
-    dot.append('"person_0002" -> "person_0003" [style=invis,weight=100];')
+    if 'person_0002' in people and 'person_0003' in people and rank['person_0002'] == rank['person_0003']:
+        dot.append('"person_0002" -> "person_0003" [style=invis,weight=100];')
     for a,b in [('person_0041','person_0027'),('person_0027','person_0028'),('person_0028','person_0002')]:
-        dot.append(f'"{a}" -> "{b}" [style=invis,weight=100];')
+        if a in people and b in people and rank[a] == rank[b]:
+            dot.append(f'"{a}" -> "{b}" [style=invis,weight=100];')
     for level in range(2*MAX_RANK,2*MIN_RANK-1,-1):
         anchor=f'anchor_{level}'
         dot.append(f'"{anchor}" [shape=point,width=0,height=0,style=invis];')

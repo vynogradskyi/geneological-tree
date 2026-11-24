@@ -25,6 +25,7 @@ window.GenealogyEditor = (() => {
     const editButton=document.getElementById('edit-person'),content=document.getElementById('person-details'),dialog=document.getElementById('person-dialog');
     const storage=api.storage,mode=document.getElementById('save-mode'),exportButton=document.getElementById('download-changes');
     mode.textContent=storage.mode==='project'?'Edytor projektu · zmiany i zdjęcia zapisują się w folderze projektu':'Tryb HTML · zmiany zapisują się w tej przeglądarce. Pobierz zmiany, aby przenieść je do folderu projektu.';
+    if(api.state().isExample)mode.textContent='Przykład demonstracyjny · '+mode.textContent;
     exportButton.hidden=storage.mode==='project';exportButton.onclick=async()=>{exportButton.disabled=true;try{await storage.exportChanges();}catch(error){api.message(error.message);}finally{exportButton.disabled=false;}};
     if(storage.staleBackup){const stale=document.getElementById('download-stale');stale.hidden=false;stale.onclick=()=>storage.exportChanges(true);mode.textContent+=' Dostępna jest wcześniejsza kopia zmian do pobrania.';}
     function stop(){editing=false;dirty=false;editButton.hidden=false;}
