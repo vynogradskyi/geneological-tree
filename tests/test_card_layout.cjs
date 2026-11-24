@@ -8,3 +8,6 @@ const nodes={dad:{x:500,y:20,w:150,h:234},mom:{x:800,y:20,w:150,h:234},child:{x:
 const edges=[{kind:'parent',tail:'dad',head:'family',paths:[],labels:[]},{kind:'parent',tail:'mom',head:'family',paths:[],labels:[]},{kind:'parent',tail:'family',head:'child',paths:[],labels:[]},{kind:'marriage',tail:'dad',head:'mom',paths:[],labels:[{text:'małżeństwo',x:0,y:0}]}];
 const routed=routeEdges(nodes,edges);assert.equal(routed[0].paths[0][0][0],575);assert.equal(routed[0].paths[0][0][1],254);assert.equal(routed[2].paths[0].at(-1)[0],175);assert.equal(routed[2].paths[0].at(-1)[1],360);assert.equal(routed[3].paths[0][0][0],575);assert.equal(routed[3].paths[0].at(-1)[0],875);assert.equal(routed[3].labels[0].x,725);assert.equal(edges[0].paths.length,0);
 console.log('Horizontal placement: 468 collision/boundary cases; family and marriage anchors verified.');
+
+// The existing Actions entry point also checks the new viewer modules.
+if(require.main===module)require('./check_viewer.cjs');

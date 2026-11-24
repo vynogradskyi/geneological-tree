@@ -24,14 +24,7 @@ jobs:
       - name: Check viewer and preservation logic
         run: |
           node --check web/app.js
-          node --check web/editor-storage.js
-          node --check web/family-auth.js
-          node tests/test_family_auth.cjs
-          node tests/test_i18n.cjs
-          node tests/test_card_view.cjs
-          node tests/test_family_layout.cjs
-          node tests/test_layout_cache.cjs
-          node --check web/responsive.js
+          node --check web/viewer-storage.js
           node tests/test_card_layout.cjs
           python3 tests/test_hosted_build.py
       - name: Build code with existing Firebase data and photos

@@ -95,12 +95,7 @@ PDF создаётся только по явному действию кноп�
 ## Проверки
 
 ```sh
-node tests/test_family_auth.cjs
-node tests/test_i18n.cjs
-node tests/test_family_layout.cjs
-node tests/test_layout_cache.cjs
-node tests/test_card_layout.cjs
-node tests/test_card_view.cjs
+node tests/test_card_layout.cjs # также запускает проверки входа, языков, семейных областей и копий раскладки
 python3 tests/test_hosted_build.py
 .venv/bin/python tests/test_editor.py
 git diff --check
