@@ -22,7 +22,7 @@ window.GenealogyFamily = (() => {
       try { saved = JSON.parse(sessionStorage.getItem(sessionKey)); } catch {}
       const user = config.users.find(u=>u.login===saved?.login && u.passwordHash===saved?.fingerprint);
       if (user) current = publicUser(user);
-    } catch (error) { console.info('Family prototype:', error.message); }
+    } catch (error) { config=null;current=null;console.info('Family prototype:', error.message); }
     return current;
   }
   function mount({change, canLeave, message}) {

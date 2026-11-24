@@ -1,0 +1,396 @@
+/* Responsive shell: the graph owns the mobile screen, secondary controls live in dialogs. */
+.mobile-only,.mobile-title,#mobile-quick-actions{
+  display:none}
+  #desktop-actions{
+    margin-left:auto}
+    .header-actions{
+      max-width:none}
+      #desktop-search{
+        width:min(380px,100%)}
+        #desktop-search .search-box{
+          width:100%}
+          .layout-toolbar{
+            flex-wrap:wrap}
+            .layout-backup{
+              width:100%;
+              padding:12px;
+              border:1px solid var(--border);
+              border-radius:9px;
+              line-height:1.5}
+              .layout-backup[hidden]{
+                display:none}
+                .layout-backup button{
+                  margin-top:8px}
+                  .person-heading{
+                    display:flex;
+                    align-items:center;
+                    gap:10px}
+                    .hero-life{
+                      margin-top:8px;
+                      font-size:16px;
+                      font-weight:600}
+                      .mobile-dialog-header{
+                        position:sticky;
+                        top:0;
+                        z-index:2;
+                        background:#fffefc;
+                        display:flex;
+                        align-items:center;
+                        justify-content:space-between;
+                        gap:16px;
+                        padding:14px 18px;
+                        border-bottom:1px solid var(--border)}
+                        .mobile-dialog-header h2{
+                          font-size:25px}
+                          .mobile-menu,.search-dialog{
+                            color:inherit;
+                            border:1px solid var(--border);
+                            border-radius:14px;
+                            background:#fffefc;
+                            padding:0;
+                            overscroll-behavior:contain;
+                            max-height:calc(var(--visual-height,100dvh) - 20px)}
+                            .mobile-menu::backdrop,.search-dialog::backdrop{
+                              background:#172c245c;
+                              backdrop-filter:blur(2px)}
+                              .mobile-menu-body{
+                                padding:18px;
+                                display:flex;
+                                flex-direction:column;
+                                gap:22px}
+                                .mobile-menu-body>button{
+                                  width:100%;
+                                  text-align:left}
+                                  .mobile-menu-body details>summary{
+                                    font-size:16px;
+                                    font-weight:600;
+                                    cursor:pointer;
+                                    min-height:44px;
+                                    display:flex;
+                                    align-items:center}
+                                    .mobile-menu-body details[open]>summary{
+                                      margin-bottom:12px}
+                                      .search-dialog{
+                                        width:min(560px,calc(100vw - 20px))}
+                                        #mobile-search-slot{
+                                          padding:16px}
+                                          #mobile-search-slot .search-box{
+                                            width:100%;
+                                            display:block}
+                                            #mobile-search-slot .search-results{
+                                              position:static;
+                                              margin-top:12px;
+                                              max-height:calc(var(--visual-height,100dvh) - 175px);
+                                              box-shadow:none}
+                                              .mobile-dialog-header .icon-button,.dialog-actions button,.person-heading button{
+                                                min-width:44px;
+                                                min-height:44px}
+                                                .edit-storage-note{
+                                                  font-size:14px;
+                                                  line-height:1.5;
+                                                  background:#edf3e8;
+                                                  padding:12px;
+                                                  border-radius:8px;
+                                                  margin:12px 0}
+                                                  .search-results button{
+                                                    min-height:44px}
+                                                    .zoom-controls button{
+                                                      min-width:44px;
+                                                      min-height:44px}
+                                                      button:disabled{
+                                                        cursor:default}
+                                                        select:focus-visible,summary:focus-visible,textarea:focus-visible{
+                                                          outline:3px solid #c08b32;
+                                                          outline-offset:3px}
+                                                          body.mobile-view{
+                                                            height:100dvh;
+                                                            overflow:hidden;
+                                                            display:flex;
+                                                            flex-direction:column}
+                                                            .mobile-view .page-header{
+                                                              height:calc(56px + env(safe-area-inset-top));
+                                                              min-height:calc(56px + env(safe-area-inset-top));
+                                                              padding:env(safe-area-inset-top) 12px 0;
+                                                              flex:none;
+                                                              align-items:center;
+                                                              gap:12px;
+                                                              flex-wrap:nowrap}
+                                                              .mobile-view .mobile-only{
+                                                                display:inline-flex;
+                                                                align-items:center;
+                                                                justify-content:center;
+                                                                min-height:44px}
+                                                                .mobile-view .mobile-title{
+                                                                  display:flex;
+                                                                  flex-direction:column;
+                                                                  min-width:0;
+                                                                  gap:3px;
+                                                                  flex:1;
+                                                                  font:600 18px/1.2 Georgia,serif}
+                                                                  .mobile-title small{
+                                                                    font:12px/1.2 Arial,sans-serif;
+                                                                    white-space:nowrap;
+                                                                    overflow:hidden;
+                                                                    text-overflow:ellipsis;
+                                                                    color:var(--muted)}
+                                                                    .mobile-view #desktop-identity,.mobile-view #desktop-actions,.mobile-view #desktop-status,.mobile-view .toolbar,.mobile-view #desktop-layout,.mobile-view #desktop-footer{
+                                                                      display:none}
+                                                                      .mobile-view main{
+                                                                        flex:1;
+                                                                        min-height:0;
+                                                                        position:relative;
+                                                                        overflow:hidden}
+                                                                        .mobile-view .viewport{
+                                                                          height:100%;
+                                                                          min-height:0;
+                                                                          margin:0;
+                                                                          border:0;
+                                                                          border-radius:0}
+                                                                          .mobile-view .map-hint{
+                                                                            display:none}
+                                                                            .mobile-view #mobile-quick-actions{
+                                                                              display:flex;
+                                                                              position:absolute;
+                                                                              left:12px;
+                                                                              right:12px;
+                                                                              bottom:calc(12px + env(safe-area-inset-bottom));
+                                                                              z-index:5;
+                                                                              justify-content:center;
+                                                                              pointer-events:none}
+                                                                              .mobile-view #mobile-quick-actions .view-controls{
+                                                                                pointer-events:auto;
+                                                                                display:flex;
+                                                                                justify-content:center;
+                                                                                width:auto;
+                                                                                max-width:100%;
+                                                                                gap:7px;
+                                                                                flex-wrap:nowrap;
+                                                                                border-radius:12px;
+                                                                                background:#fffefcf5;
+                                                                                padding:5px;
+                                                                                box-shadow:0 3px 20px #17351e25}
+                                                                                .mobile-view #mobile-quick-actions button{
+                                                                                  min-height:44px;
+                                                                                  font-size:14px;
+                                                                                  padding:8px 10px}
+                                                                                  .mobile-view #mobile-quick-actions .zoom-controls{
+                                                                                    margin:0;
+                                                                                    flex-shrink:0}
+                                                                                    .mobile-view #zoom-label{
+                                                                                      display:none}
+                                                                                      .mobile-view .mobile-menu{
+                                                                                        position:fixed;
+                                                                                        inset:0 0 0 auto;
+                                                                                        width:min(420px,100vw);
+                                                                                        max-width:100%;
+                                                                                        height:var(--visual-height,100dvh);
+                                                                                        max-height:var(--visual-height,100dvh);
+                                                                                        margin:0;
+                                                                                        border:0;
+                                                                                        border-radius:0;
+                                                                                        padding-top:env(safe-area-inset-top);
+                                                                                        padding-bottom:env(safe-area-inset-bottom)}
+                                                                                        .mobile-view .header-actions{
+                                                                                          width:100%;
+                                                                                          max-width:none;
+                                                                                          display:flex;
+                                                                                          flex-direction:column;
+                                                                                          align-items:stretch;
+                                                                                          gap:14px;
+                                                                                          flex-wrap:nowrap}
+                                                                                          .mobile-view .family-controls{
+                                                                                            justify-content:space-between;
+                                                                                            gap:10px}
+                                                                                            .mobile-view .family-controls span{
+                                                                                              width:100%}
+                                                                                              .mobile-view .header-actions button.primary{
+                                                                                                justify-content:center}
+                                                                                                .mobile-view .header-actions button.primary span{
+                                                                                                  display:inline}
+                                                                                                  .mobile-view .language-control{
+                                                                                                    margin:0;
+                                                                                                    justify-content:space-between}
+                                                                                                    .mobile-view .editor-status{
+                                                                                                      padding:12px;
+                                                                                                      border:1px solid var(--border);
+                                                                                                      border-radius:9px;
+                                                                                                      background:#edf3e8;
+                                                                                                      font-size:14px;
+                                                                                                      display:flex;
+                                                                                                      align-items:flex-start;
+                                                                                                      flex-direction:column;
+                                                                                                      gap:10px}
+                                                                                                      .mobile-view .editor-status button{
+                                                                                                        min-height:44px;
+                                                                                                        font-size:14px;
+                                                                                                        white-space:normal}
+                                                                                                        .mobile-view .layout-toolbar{
+                                                                                                          padding:0;
+                                                                                                          display:flex;
+                                                                                                          flex-direction:column;
+                                                                                                          align-items:stretch;
+                                                                                                          gap:14px;
+                                                                                                          background:transparent}
+                                                                                                          .mobile-view .layout-mode,.mobile-view .layout-history{
+                                                                                                            width:100%;
+                                                                                                            margin:0;
+                                                                                                            display:flex;
+                                                                                                            flex-wrap:wrap;
+                                                                                                            gap:8px}
+                                                                                                            .mobile-view .layout-mode>span{
+                                                                                                              font-size:14px;
+                                                                                                              line-height:1.5}
+                                                                                                              .mobile-view .layout-toolbar button{
+                                                                                                                min-height:44px;
+                                                                                                                white-space:normal}
+                                                                                                                .mobile-view .layout-mode>button{
+                                                                                                                  width:100%}
+                                                                                                                  .mobile-view .page-footer{
+                                                                                                                    padding:0;
+                                                                                                                    display:block;
+                                                                                                                    font-size:14px}
+                                                                                                                    .mobile-view .legend{
+                                                                                                                      display:grid;
+                                                                                                                      gap:14px;
+                                                                                                                      font-size:14px}
+                                                                                                                      .mobile-view .identity h1{
+                                                                                                                        font-size:25px;
+                                                                                                                        max-width:none}
+                                                                                                                        .mobile-view .identity p{
+                                                                                                                          font-size:14px;
+                                                                                                                          line-height:1.5;
+                                                                                                                          margin-top:12px}
+                                                                                                                          .mobile-view #menu-project{
+                                                                                                                            margin-bottom:20px}
+                                                                                                                            .mobile-view #mobile-layout-exit:not([hidden]){
+                                                                                                                              display:block;
+                                                                                                                              position:absolute;
+                                                                                                                              z-index:6;
+                                                                                                                              top:12px;
+                                                                                                                              left:50%;
+                                                                                                                              transform:translateX(-50%);
+                                                                                                                              max-width:calc(100% - 24px);
+                                                                                                                              min-height:44px;
+                                                                                                                              background:#244f3c;
+                                                                                                                              color:#fff;
+                                                                                                                              border:0;
+                                                                                                                              box-shadow:0 2px 16px #17351e25}
+                                                                                                                              .mobile-view.mobile-arranging .viewport{
+                                                                                                                                box-shadow:inset 0 0 0 3px #8da98b}
+                                                                                                                                .mobile-view .person-dialog{
+                                                                                                                                  position:fixed;
+                                                                                                                                  inset:auto 0 0;
+                                                                                                                                  margin:0;
+                                                                                                                                  width:100%;
+                                                                                                                                  max-width:none;
+                                                                                                                                  height:58dvh;
+                                                                                                                                  min-height:260px;
+                                                                                                                                  max-height:var(--visual-height,100dvh);
+                                                                                                                                  border-radius:18px 18px 0 0;
+                                                                                                                                  overscroll-behavior:contain;
+                                                                                                                                  padding-bottom:env(safe-area-inset-bottom)}
+                                                                                                                                  .mobile-view .person-dialog.sheet-expanded{
+                                                                                                                                    height:var(--visual-height,100dvh);
+                                                                                                                                    border-radius:0}
+                                                                                                                                    .mobile-view .dialog-bar{
+                                                                                                                                      padding:8px 12px;
+                                                                                                                                      min-height:56px;
+                                                                                                                                      letter-spacing:0;
+                                                                                                                                      gap:8px}
+                                                                                                                                      .mobile-view .person-heading{
+                                                                                                                                        flex-direction:column;
+                                                                                                                                        align-items:flex-start;
+                                                                                                                                        gap:0}
+                                                                                                                                        .mobile-view .person-heading>span{
+                                                                                                                                          display:none}
+                                                                                                                                          .mobile-view .person-heading button{
+                                                                                                                                            font-size:12px;
+                                                                                                                                            padding:6px;
+                                                                                                                                            border:0;
+                                                                                                                                            background:transparent}
+                                                                                                                                            .mobile-view .dialog-actions{
+                                                                                                                                              gap:4px}
+                                                                                                                                              .mobile-view .dialog-actions>button:not(.icon-button){
+                                                                                                                                                font-size:13px;
+                                                                                                                                                padding:6px 8px}
+                                                                                                                                                .mobile-view #person-details{
+                                                                                                                                                  display:flex;
+                                                                                                                                                  flex-direction:column}
+                                                                                                                                                  .mobile-view .details-hero{
+                                                                                                                                                    display:grid;
+                                                                                                                                                    grid-template-columns:110px minmax(0,1fr);
+                                                                                                                                                    gap:7px 14px;
+                                                                                                                                                    padding:18px 20px;
+                                                                                                                                                    order:0}
+                                                                                                                                                    .mobile-view .portrait-button,.mobile-view .detail-initials{
+                                                                                                                                                      grid-column:1;
+                                                                                                                                                      grid-row:1/span 5;
+                                                                                                                                                      width:110px;
+                                                                                                                                                      height:144px;
+                                                                                                                                                      margin:0;
+                                                                                                                                                      align-self:start}
+                                                                                                                                                      .mobile-view .portrait-button img{
+                                                                                                                                                        height:144px}
+                                                                                                                                                        .mobile-view .portrait-button span{
+                                                                                                                                                          display:none}
+                                                                                                                                                          .mobile-view .details-hero h2{
+                                                                                                                                                            grid-column:2;
+                                                                                                                                                            font-size:25px;
+                                                                                                                                                            line-height:1.12;
+                                                                                                                                                            align-self:end}
+                                                                                                                                                            .mobile-view .details-hero .hero-life,.mobile-view .details-hero .detail-subtitle,.mobile-view .details-hero .role-label{
+                                                                                                                                                              grid-column:2;
+                                                                                                                                                              margin:0;
+                                                                                                                                                              font-size:14px;
+                                                                                                                                                              line-height:1.4}
+                                                                                                                                                              .mobile-view .details-hero .issue,.mobile-view .details-hero .translation-notice{
+                                                                                                                                                                grid-column:1/-1}
+                                                                                                                                                                .mobile-view .family-section{
+                                                                                                                                                                  order:1}
+                                                                                                                                                                  .mobile-view .life-section{
+                                                                                                                                                                    order:2}
+                                                                                                                                                                    .mobile-view .details-section:not(.family-section):not(.life-section){
+                                                                                                                                                                      order:3}
+                                                                                                                                                                      .mobile-view .details-section{
+                                                                                                                                                                        padding:16px 20px}
+                                                                                                                                                                        .mobile-view .relative-row{
+                                                                                                                                                                          grid-template-columns:76px minmax(0,1fr);
+                                                                                                                                                                          gap:8px}
+                                                                                                                                                                          .mobile-view .relative-row>span{
+                                                                                                                                                                            font-size:14px}
+                                                                                                                                                                            .mobile-view .relative-link{
+                                                                                                                                                                              min-height:44px;
+                                                                                                                                                                              font-size:14px}
+                                                                                                                                                                              .mobile-view .export-message{
+                                                                                                                                                                                bottom:calc(82px + env(safe-area-inset-bottom));
+                                                                                                                                                                                font-size:14px}
+                                                                                                                                                                                .mobile-view .person-status{
+                                                                                                                                                                                  font-size:14px}
+                                                                                                                                                                                  .mobile-view .edit-actions{
+                                                                                                                                                                                    padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+                                                                                                                                                                                    .mobile-view .search-dialog{
+                                                                                                                                                                                      position:fixed;
+                                                                                                                                                                                      inset:0;
+                                                                                                                                                                                      width:100vw;
+                                                                                                                                                                                      max-width:none;
+                                                                                                                                                                                      height:var(--visual-height,100dvh);
+                                                                                                                                                                                      max-height:var(--visual-height,100dvh);
+                                                                                                                                                                                      margin:0;
+                                                                                                                                                                                      border:0;
+                                                                                                                                                                                      border-radius:0;
+                                                                                                                                                                                      padding-top:env(safe-area-inset-top)}
+                                                                                                                                                                                      .mobile-view .search-box>svg{
+                                                                                                                                                                                        top:13px}
+                                                                                                                                                                                        .mobile-view #mobile-search-slot .search-results{
+                                                                                                                                                                                          max-height:calc(var(--visual-height,100dvh) - 145px)}
+                                                                                                                                                                                          @media(max-width:1000px) and (max-height:500px){
+                                                                                                                                                                                            .mobile-view .person-dialog{
+                                                                                                                                                                                              height:var(--visual-height,100dvh);
+                                                                                                                                                                                              border-radius:0}
+                                                                                                                                                                                              .mobile-view .details-hero{
+                                                                                                                                                                                                grid-template-columns:110px minmax(0,1fr)}
+                                                                                                                                                                                              }
+                                                                                                                                                                                              @media(max-width:1000px) and (max-height:500px){
+                                                                                                                                                                                                .mobile-view #toggle-person-size{
+                                                                                                                                                                                                  display:none}
+                                                                                                                                                                                                }

@@ -2,8 +2,7 @@
   'use strict';
   const I=window.GenealogyI18n;await I.ready;
   const t=(key,values)=>I.t(key,values);
-  const accountMenu=document.querySelector('.account-menu'),narrow=matchMedia('(max-width:760px)');
-  accountMenu.open=!narrow.matches;narrow.addEventListener('change',()=>{accountMenu.open=!narrow.matches;});
+  const responsive=window.GenealogyResponsive;responsive.init();
   const seed = await (window.GENEALOGY_READY || Promise.resolve(window.GENEALOGY));
   const family=window.GenealogyFamily;
   let familyUser=family?.enabled?await family.ready():null;
@@ -22,7 +21,7 @@
   const normal = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ł/g,'l').replace(/Ł/g,'L').toLowerCase();
   const display=p=>I.person(p,G);
   const fullName = raw => {const p=display(raw);return [p.firstName || t('Imię nieznane'),p.lastName].filter(Boolean).join(' ');};
-  const shortName = p => p.id === 'person_0038' && !p.firstName ? t('Matka Anny · imię nieznane') : fullName(p);
+  const shortName = p => {if(p.firstName||p.lastName)return fullName(p);const child=[...people.values()].find(c=>(c.Mommy===p.id||c.Daddy===p.id)&&(c.firstName||c.lastName));return child?t(child.Mommy===p.id?'Matka osoby {value} · imię nieznane':'Ojciec osoby {value} · imię nieznane',{value:fullName(child)}):fullName(p);};
   const date = value => GenealogyDates.date(value);
   const life = p => GenealogyDates.life(p);
   const photoSource = p => GenealogyStorage.photoSource(G,p);
@@ -30,7 +29,8 @@
   const extraLines = raw => {const p=display(raw);return [p.maidenName ? `z domu ${p.maidenName}` : '', p.formerLastNames.length ? `poprz. ${p.formerLastNames.join(', ')}` : '', p.title || '', p.occupation || '', p.deathCircumstances || ''].filter(Boolean).map(I.translate);};
   const pathData = points => `M ${points[0].join(' ')} C ${points.slice(1).map(p => p.join(' ')).join(' ')}`;
   const viewport = $('viewport'), world = $('world'), personDialog = $('person-dialog'), photoDialog = $('photo-dialog');
-  const state = {scale:1,x:0,y:0,selected:null};
+  const state = {scale:1,x:0,y:0,selected:null};let sheetReturn=null;
+  personDialog.addEventListener('close',()=>{if(sheetReturn){Object.assign(state,sheetReturn);sheetReturn=null;transform();}personButtons.get(state.selected)?.focus({preventScroll:true});});
   const svg = $('connections'), personButtons = new Map();
   function paintConnections(){
     svg.replaceChildren();
@@ -64,46 +64,47 @@
     const initials=[p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('') || '?';
     const image=G.thumbnails[p.id] ? `<img class="node-photo" src="${G.thumbnails[p.id]}" alt="" draggable="false">` : `<span class="node-photo node-placeholder"><b>${esc(initials)}</b><span>brak zdjęcia</span></span>`;
     const subtitles=extraLines(p);
-    button.innerHTML=image+`<span class="node-names"><span class="node-name">${esc(p.id==='person_0038'&&!p.firstName?t('Matka Anny'):p.firstName || t('Imię nieznane'))}</span>`+`<span class="node-name">${esc(p.lastName || (p.id==='person_0038'&&!p.firstName?t('imię nieznane'):p.title || ''))}</span></span>`+(subtitles.length?`<span class="node-subtitle">${esc(subtitles.filter(s=>s!==p.title).slice(0,2).join(' · '))}</span>`:'')+`<span class="node-dates">${esc(life(p))}</span>`;
+    button.innerHTML=image+`<span class="node-names"><span class="node-name">${esc(p.firstName || t('Imię nieznane'))}</span>`+`<span class="node-name">${esc(p.lastName || p.title || '')}</span></span>`+(subtitles.length?`<span class="node-subtitle">${esc(subtitles.filter(s=>s!==p.title).slice(0,2).join(' · '))}</span>`:'')+`<span class="node-dates">${esc(life(p))}</span>`;
     button.addEventListener('click',()=>{if(!dragWasMoved)openPerson(p.id);});
     $('people').append(button);GenealogyCardView.fit(button);personButtons.set(p.id,button);
   }
-  const author=fullName(people.get(G.data.rootPersonId));$('author-name').textContent=author;$('go-root').textContent=people.get(G.data.rootPersonId).firstName||'Osoba główna';document.title=t('Moje drzewo genealogiczne')+' · '+author;
+  const author=fullName(people.get(G.data.rootPersonId));$('author-name').textContent=author;$('go-root').textContent=people.get(G.data.rootPersonId).firstName||t('Osoba główna');document.title=t('Moje drzewo genealogiczne')+' · '+author;
   $('summary').textContent=I.summary(people.size,G.generations);
-  $('updated-on').textContent=G.updatedOn;
+  $('updated-on').textContent=G.updatedOn;$('mobile-root-name').textContent=fullName(people.get(G.data.rootPersonId));
   I.dom();
   }
   drawTree();
   let activeCard=null;
   const cardLayout=GenealogyCardLayout.create({model:G,onChange:updateLayoutView,onMessage:message,onActiveChange:id=>{if(activeCard)personButtons.get(activeCard)?.classList.remove('is-dragging');activeCard=id;if(id)personButtons.get(id)?.classList.add('is-dragging');viewport.classList.toggle('card-drag-active',!!id);}});
   function transform(){world.style.transform=`translate(${state.x}px,${state.y}px) scale(${state.scale})`;$('zoom-label').textContent=Math.round(state.scale*100)+'%';}
-  function focusPerson(id, scale=1){const n=G.nodes[id];state.scale=scale;state.x=viewport.clientWidth/2-(n.x+n.w/2)*scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-n.h*scale/2-24)-(n.y+n.h/2)*scale;transform();}
+  function focusPerson(id, scale=1){const n=G.nodes[id];state.scale=scale;state.x=viewport.clientWidth/2-(n.x+n.w/2)*scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-n.h*scale/2-(responsive.mobile?88:24))-(n.y+n.h/2)*scale;transform();}
   function zoom(factor,x=viewport.clientWidth/2,y=viewport.clientHeight/2){const old=state.scale;state.scale=Math.max(.12,Math.min(2.5,old*factor));state.x=x-(x-state.x)*state.scale/old;state.y=y-(y-state.y)*state.scale/old;transform();}
   $('zoom-in').onclick=()=>zoom(1.25);$('zoom-out').onclick=()=>zoom(.8);
   function goRoot(){
-    if(viewport.clientWidth>=600){focusPerson(G.data.rootPersonId,1);return;}
+    if(!responsive.mobile){focusPerson(G.data.rootPersonId,1);return;}
+    if(viewport.clientHeight<500){focusPerson(G.data.rootPersonId,.75);return;}
     const p=people.get(G.data.rootPersonId),nodes=[p.id,p.Mommy,p.Daddy].filter(Boolean).map(id=>G.nodes[id]);
-    const left=Math.min(...nodes.map(n=>n.x)),right=Math.max(...nodes.map(n=>n.x+n.w));
-    const root=G.nodes[p.id];state.scale=Math.min(.9,(viewport.clientWidth-34)/(right-left));
-    state.x=(viewport.clientWidth-(right-left)*state.scale)/2-left*state.scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-root.h*state.scale/2-24)-(root.y+root.h/2)*state.scale;transform();
+    const left=Math.min(...nodes.map(n=>n.x)),right=Math.max(...nodes.map(n=>n.x+n.w)),top=Math.min(...nodes.map(n=>n.y)),bottom=Math.max(...nodes.map(n=>n.y+n.h));
+    const root=G.nodes[p.id];state.scale=Math.min(.9,(viewport.clientWidth-24)/(right-left),(viewport.clientHeight-96)/(bottom-top));
+    state.x=(viewport.clientWidth-(right-left)*state.scale)/2-left*state.scale;state.y=(viewport.clientHeight-76-(bottom-top)*state.scale)/2-top*state.scale;transform();
   }
   $('go-root').onclick=goRoot;
   $('fit-tree').onclick=()=>{state.scale=Math.max(.08,Math.min((viewport.clientWidth-50)/G.width,(viewport.clientHeight-70)/G.height));state.x=(viewport.clientWidth-G.width*state.scale)/2;state.y=(viewport.clientHeight-G.height*state.scale)/2+12;transform();};
   let drag=null,dragWasMoved=false;
   const pointers=new Map();let pinch=null;
   viewport.addEventListener('pointerdown',e=>{
-    if(e.button!==0)return;
+    if(e.button!==0||e.target.closest('#mobile-quick-actions,#mobile-layout-exit'))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    const card=e.target.closest('.person-node'),canMove=card&&cardLayout.isEnabled()&&e.pointerType==='mouse';
+    const card=e.target.closest('.person-node'),canMove=card&&cardLayout.isEnabled()&&(e.pointerType==='mouse'||responsive.mobile);
     drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,x:state.x,y:state.y,mode:canMove?'card':'pan',person:canMove?card.dataset.person:null,cardX:canMove?G.nodes[card.dataset.person].x:null};
     dragWasMoved=false;
-    if(pointers.size===2){if(cardLayout.isDragging())cardLayout.cancel();const[a,b]=[...pointers.values()];pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),scale:state.scale};drag.mode='pan';}
+    if(pointers.size===2){if(cardLayout.isDragging())cardLayout.cancel();const[a,b]=[...pointers.values()];const rect=viewport.getBoundingClientRect();pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),scale:state.scale,worldX:((a.x+b.x)/2-rect.left-state.x)/state.scale,worldY:((a.y+b.y)/2-rect.top-state.y)/state.scale};drag.mode='pan';}
     if(!card)viewport.setPointerCapture(e.pointerId);
   });
   viewport.addEventListener('pointermove',e=>{
     if(!pointers.has(e.pointerId))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pinch&&pointers.size===2){const[a,b]=[...pointers.values()];const distance=Math.hypot(a.x-b.x,a.y-b.y),rect=viewport.getBoundingClientRect();zoom((pinch.scale*distance/pinch.distance)/state.scale,(a.x+b.x)/2-rect.left,(a.y+b.y)/2-rect.top);dragWasMoved=true;return;}
+    if(pinch&&pointers.size===2){const[a,b]=[...pointers.values()];const distance=Math.hypot(a.x-b.x,a.y-b.y),rect=viewport.getBoundingClientRect();state.scale=Math.max(.12,Math.min(2.5,pinch.scale*distance/pinch.distance));state.x=(a.x+b.x)/2-rect.left-pinch.worldX*state.scale;state.y=(a.y+b.y)/2-rect.top-pinch.worldY*state.scale;transform();dragWasMoved=true;return;}
     if(!drag||drag.id!==e.pointerId)return;
     const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
     if(Math.hypot(dx,dy)>6)dragWasMoved=true;
@@ -118,7 +119,7 @@
   });
   function stopDrag(e,cancel=false){
     if(drag?.id===e.pointerId&&drag.mode==='card'&&cardLayout.isDragging())cancel?cardLayout.cancel():cardLayout.finish();
-    pointers.delete(e.pointerId);pinch=null;drag=null;viewport.classList.remove('dragging');
+    pointers.delete(e.pointerId);pinch=null;drag=null;viewport.classList.remove('dragging');if(pointers.size===1){const[id,point]=[...pointers][0];drag={id,startX:point.x,startY:point.y,x:state.x,y:state.y,mode:'pan'};}
     if(viewport.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId);
     setTimeout(()=>{dragWasMoved=false;},0);
   }
@@ -149,15 +150,15 @@
     if(p.deathCircumstances)facts.push(['Okoliczności śmierci',p.deathCircumstances]);
     if(p.patronymic)facts.push(['Imię odojcowskie',p.patronymic]);
     if(p.formerLastNames.length)facts.push(['Poprzednie nazwiska',p.formerLastNames.join(', ')]);
-    $('person-details').innerHTML=`<section class="details-hero">${portrait}<h2 id="person-name">${esc(shortName(p))}</h2>${p.maidenName?`<p class="detail-subtitle">z domu ${esc(p.maidenName)}</p>`:''}${[p.title,p.occupation].filter(Boolean).map(t=>`<span class="role-label">${esc(t)}</span>`).join('')}${I.hasStale(people.get(id),G)?`<p class="translation-notice">${esc(t('Brak aktualnego tłumaczenia — pokazano tekst polski.'))}</p>`:''}${G.disconnectedPeople?.includes(p.id)?'<p class="issue">Brak ustalonego połączenia z osobą główną. Sprawdź powiązania rodzinne.</p>':''}</section>`+
-      `<section class="details-section"><h3>Życie</h3><dl class="facts">${facts.map(([label,value])=>`<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`).join('')}</dl></section>`+
-      `<section class="details-section"><h3>Rodzina</h3>${relativeRow('Matka',p.Mommy?[p.Mommy]:[])}${relativeRow('Ojciec',p.Daddy?[p.Daddy]:[])}${relativeRow('Małżeństwa',spouseIds)}${relativeRow('Dzieci',children)}${relativeRow('Rodzeństwo',[...siblings])}${marriages.filter(r=>r.status==='rozwiedzeni').map(r=>`<p class="photo-credit">Rozwód: ${esc(fullName(people.get(r.personIds.find(pid=>pid!==id))))}.</p>`).join('')}</section>`+
+    $('person-details').innerHTML=`<section class="details-hero">${portrait}<h2 id="person-name">${esc(shortName(p))}</h2><p class="hero-life">${esc(life(p))}</p>${p.maidenName?`<p class="detail-subtitle">z domu ${esc(p.maidenName)}</p>`:''}${[p.title,p.occupation].filter(Boolean).map(t=>`<span class="role-label">${esc(t)}</span>`).join('')}${I.hasStale(people.get(id),G)?`<p class="translation-notice">${esc(t('Brak aktualnego tłumaczenia — pokazano tekst polski.'))}</p>`:''}${G.disconnectedPeople?.includes(p.id)?'<p class="issue">Brak ustalonego połączenia z osobą główną. Sprawdź powiązania rodzinne.</p>':''}</section>`+
+      `<section class="details-section life-section"><h3>Życie</h3><dl class="facts">${facts.map(([label,value])=>`<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`).join('')}</dl></section>`+
+      `<section class="details-section family-section"><h3>Rodzina</h3>${relativeRow('Matka',p.Mommy?[p.Mommy]:[])}${relativeRow('Ojciec',p.Daddy?[p.Daddy]:[])}${relativeRow('Małżeństwa',spouseIds)}${relativeRow('Dzieci',children)}${relativeRow('Rodzeństwo',[...siblings])}${marriages.filter(r=>r.status==='rozwiedzeni').map(r=>`<p class="photo-credit">Rozwód: ${esc(fullName(people.get(r.personIds.find(pid=>pid!==id))))}.</p>`).join('')}</section>`+
       (p.notes?`<section class="details-section"><h3>Historia i uwagi</h3><p class="notes">${esc(p.notes)}</p></section>`:'')+
       (issues.length?`<section class="details-section"><h3>Do wyjaśnienia</h3>${issues.map(q=>`<p class="issue">${esc(I.issue(q,G))}</p>`).join('')}</section>`:'')+
       `<section class="details-section"><h3>Źródła informacji</h3><ol class="sources">${p.sources.map(s=>`<li>${linkify(s)}</li>`).join('')}</ol>${G.credits.filter(c=>c.personId===id).map(c=>`<p class="photo-credit">Wcześniej wskazane źródło zdjęcia: <a href="${esc(c.sourcePage)}" target="_blank" rel="noopener noreferrer">${esc(c.author)}</a> · <a href="${esc(c.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(c.license)}</a>. Obecny plik dostarczony przez użytkownika.</p>`).join('')}</section>`;
-    $('person-details').querySelectorAll('[data-relative]').forEach(button=>button.onclick=()=>{const next=button.dataset.relative;focusPerson(next,state.scale<.65?.9:state.scale);openPerson(next);});
+    $('person-details').querySelectorAll('[data-relative]').forEach(button=>button.onclick=()=>{const next=button.dataset.relative;focusPerson(next,state.scale<.65?.9:state.scale);if(responsive.mobile)sheetReturn={x:state.x,y:state.y,scale:state.scale};openPerson(next);});
     if(p.photo)$('enlarge-portrait').onclick=()=>{$('full-photo').src=photoSource(p);$('full-photo').alt=fullName(p);photoDialog.showModal();};
-    if(!personDialog.open)personDialog.showModal();personDialog.scrollTop=0;
+    if(!personDialog.open){if(responsive.mobile)sheetReturn={x:state.x,y:state.y,scale:state.scale};personDialog.classList.remove('sheet-expanded');$('toggle-person-size').setAttribute('aria-expanded','false');personDialog.showModal();}if(responsive.mobile&&!personDialog.classList.contains('sheet-expanded')){const node=G.nodes[id],free=Math.max(120,viewport.clientHeight-personDialog.offsetHeight);state.x=viewport.clientWidth/2-(node.x+node.w/2)*state.scale;state.y=free/2-(node.y+node.h/2)*state.scale;transform();}personDialog.scrollTop=0;
     $('announcer').textContent=t('Otwarta karta: {value}',{value:fullName(p)});I.dom(personDialog);
   }
   $('close-person').onclick=()=>personDialog.close();$('close-photo').onclick=()=>photoDialog.close();
@@ -176,7 +177,7 @@
   family?.mount({canLeave:()=>!editor?.isDirty(),message,change:async user=>{
     const nextStorage=user?await GenealogyStorage.open(seed,{browserOnly:true,account:user.login}):{mode:'readonly',state:structuredClone(seed)};
     activeStorage=nextStorage;familyUser=user;
-    Object.assign(G,structuredClone(nextStorage.state));Object.assign(G,GenealogyFamilyLayout.create(G.data));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));
+    for(const key of Object.keys(G))delete G[key];Object.assign(G,structuredClone(nextStorage.state));Object.assign(G,GenealogyFamilyLayout.create(G.data));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));
     cardLayout.refresh();drawTree();editor.refresh();
     if(personDialog.open&&state.selected)openPerson(state.selected);I.dom();
   }});
@@ -188,12 +189,13 @@
     closeSearch();I.dom();
   };
   const search=$('person-search'),results=$('search-results');
-  function closeSearch(){results.hidden=true;search.setAttribute('aria-expanded','false');}
-  search.addEventListener('input',()=>{const query=normal(search.value.trim());if(!query){closeSearch();return;}const matches=[...people.values()].filter(p=>normal([fullName(p),...Object.values(display(p)).filter(v=>typeof v==='string'),p.birthYear].filter(Boolean).join(' ')).includes(query));results.innerHTML=matches.length?matches.map(p=>`<button type="button" data-result="${p.id}">${esc(shortName(p))}<small>${esc(life(p))}${p.maidenName?' · z domu '+esc(p.maidenName):''}</small></button>`).join(''):'<p class="no-results">Nie znaleziono osoby.</p>';results.hidden=false;search.setAttribute('aria-expanded','true');I.dom(results);results.querySelectorAll('button').forEach(button=>button.onclick=()=>{const id=button.dataset.result;closeSearch();search.value='';focusPerson(id,1);openPerson(id);});});
+  function closeSearch(){responsive.closeSearch();results.hidden=true;search.setAttribute('aria-expanded','false');}
+  search.addEventListener('input',()=>{const query=normal(search.value.trim());if(!query){closeSearch();return;}const matches=[...people.values()].filter(p=>normal([fullName(p),p.firstName,p.lastName,p.maidenName,...p.formerLastNames,...display(p).formerLastNames,...Object.values(display(p).birthPlace||{}),p.birthYear].filter(Boolean).join(' ')).includes(query));results.innerHTML=matches.length?matches.map(p=>`<button type="button" data-result="${p.id}">${esc(shortName(p))}<small>${esc(life(p))}${p.maidenName?' · z domu '+esc(p.maidenName):''}</small></button>`).join(''):'<p class="no-results">Nie znaleziono osoby.</p>';results.hidden=false;search.setAttribute('aria-expanded','true');I.dom(results);results.querySelectorAll('button').forEach(button=>button.onclick=()=>{const id=button.dataset.result;closeSearch();search.value='';focusPerson(id,1);openPerson(id);});});
   search.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();if(e.key==='ArrowDown'){e.preventDefault();results.querySelector('button')?.focus();}if(e.key==='Enter')results.querySelector('button')?.click();});
-  document.addEventListener('click',e=>{if(!e.target.closest('.search-box'))closeSearch();});
+  document.addEventListener('click',e=>{if(!responsive.mobile&&!e.target.closest('.search-box'))closeSearch();});
+  responsive.onChange(()=>{cardLayout.setMobile(responsive.mobile);});
   let previousViewport={width:viewport.clientWidth,height:viewport.clientHeight};
-  window.addEventListener('resize',()=>{const next={width:viewport.clientWidth,height:viewport.clientHeight};state.x+=(next.width-previousViewport.width)/2;state.y+=(next.height-previousViewport.height)*.72;previousViewport=next;transform();});
+  window.addEventListener('resize',()=>{const next={width:viewport.clientWidth,height:viewport.clientHeight};state.x+=(next.width-previousViewport.width)/2;state.y+=(next.height-previousViewport.height)*.72;if(sheetReturn){sheetReturn.x+=(next.width-previousViewport.width)/2;sheetReturn.y+=(next.height-previousViewport.height)*.72;}previousViewport=next;transform();});
   requestAnimationFrame(goRoot);
 
   async function exportPDF(){
@@ -210,7 +212,7 @@
       for(const raw of people.values()){
         const p=display(raw);
         GenealogyCardView.drawPDF(ctx,{node:G.nodes[p.id],branch:G.branches[p.id],root:p.id===G.data.rootPersonId,image:images.get(p.id),
-          names:[p.id==='person_0038'&&!p.firstName?t('Matka Anny'):p.firstName||t('Imię nieznane'),p.lastName||(p.id==='person_0038'&&!p.firstName?t('imię nieznane'):p.title||'')],
+          names:[p.firstName||t('Imię nieznane'),p.lastName||p.title||''],
           subtitle:extraLines(p).filter(text=>text!==p.title).slice(0,2).join(' · '),dates:life(p),initials:[p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('')||'?',noPhoto:t('brak zdjęcia')});
       }
       ctx.restore();ctx.textAlign='left';ctx.font='15px Arial';ctx.fillStyle='#65745f';ctx.fillText(t('Źródła: rozmowy rodzinne, dokumenty i podpisy fotografii. Szczegóły w kartach osób.'),pad,H-62);ctx.font='12px Arial';ctx.fillText(G.credits?.length?G.credits.map(c=>[c.author,c.sourcePage,c.license].filter(Boolean).join(' · ')).join('; '):t('Zdjęcia: materiały użytkownika.'),pad,H-39);ctx.fillText(t('? — brak danych. Wielokropek — osoba żyje według przekazanych informacji. Brak daty śmierci nie potwierdza statusu życia.'),pad,H-20);
@@ -219,5 +221,5 @@
       const bytes=await pdf.save(),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),a=document.createElement('a');a.href=url;a.download='moje-drzewo-genealogiczne.pdf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);canvas.width=1;canvas.height=1;message.textContent=t('PDF jest gotowy.');setTimeout(()=>{message.hidden=true;},3500);
     }catch(error){console.error(error);message.textContent=t('Nie udało się utworzyć PDF. Spróbuj ponownie.');}finally{button.disabled=false;}
   }
-  $('download-pdf').onclick=exportPDF;
-})().catch(error=>{console.error(error);const box=document.getElementById('save-mode');if(box)box.textContent=window.GenealogyI18n?.t('Nie udało się wczytać strony. Odśwież stronę.')||'Nie udało się wczytać strony. Odśwież stronę.';});
+  $('download-pdf').onclick=()=>{responsive.closeMenu();exportPDF();};
+})().catch(error=>{console.error(error);const text=window.GenealogyI18n?.t('Nie udało się wczytać strony. Odśwież stronę.')||'Nie udało się wczytać strony. Odśwież stronę.';const box=document.getElementById('save-mode');if(box)box.textContent=text;const notice=document.getElementById('export-message');if(notice){notice.textContent=text;notice.setAttribute('role','alert');notice.hidden=false;}});

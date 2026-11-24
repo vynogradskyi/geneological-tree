@@ -41,7 +41,8 @@ window.GenealogyI18n = (() => {
   function hasStale(raw,state){
     if(language==='pl')return false;
     const entry=state.translations?.[language]?.people?.[raw.id];
-    return fields.some(key=>raw[key]&&!['firstName','lastName','maidenName','patronymic','formerLastNames'].includes(key)&&(!entry||!Object.hasOwn(entry.values,key)||JSON.stringify(entry.source[key])!==JSON.stringify(raw[key])));
+    const hasText=value=>typeof value==='string'?!!value.trim():value&&typeof value==='object'?Object.values(value).some(hasText):false;
+    return fields.some(key=>hasText(raw[key])&&!['firstName','lastName','maidenName','patronymic','formerLastNames'].includes(key)&&(!entry||!Object.hasOwn(entry.values,key)||JSON.stringify(entry.source[key])!==JSON.stringify(raw[key])));
   }
   function issue(raw,state) {
     const entry=state.translations?.[language]?.issues?.[raw.id];

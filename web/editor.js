@@ -23,7 +23,7 @@ window.GenealogyEditor = (() => {
     if(/[\u0400-\u04ff]/.test(JSON.stringify([p,marriages])))throw Error('Dane wpisuj po polsku lub zatwierdzoną pisownią łacińską.');
   }
   function mount(api){
-    let editing=false,dirty=false;
+    let editing=false,dirty=false,wasExpanded=false;
     const editButton=document.getElementById('edit-person'),content=document.getElementById('person-details'),dialog=document.getElementById('person-dialog');
     const storage=api.storage,mode=document.getElementById('save-mode'),exportButton=document.getElementById('download-changes');
     const canEdit=()=>!api.canEdit||api.canEdit();
@@ -36,18 +36,18 @@ window.GenealogyEditor = (() => {
     }
     exportButton.onclick=async()=>{if(!canEdit())return;exportButton.disabled=true;try{await storage.exportChanges();}catch(error){api.message(error.message);}finally{exportButton.disabled=false;}};
     document.getElementById('download-stale').onclick=()=>{if(canEdit())storage.exportChanges(true);};
-    function stop(){editing=false;dirty=false;refresh();}
+    function stop(){if(editing){dialog.classList.toggle('sheet-expanded',wasExpanded);const expand=document.getElementById('toggle-person-size');expand.disabled=false;expand.setAttribute('aria-expanded',String(wasExpanded));expand.textContent=t(wasExpanded?'Zwiń':'Rozwiń');}editing=false;dirty=false;refresh();}
     refresh();
     api.onView(stop);
     dialog.addEventListener('cancel',e=>{if(editing&&dirty){e.preventDefault();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}});
     dialog.addEventListener('click',e=>{if(!editing||!dirty||e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){e.stopImmediatePropagation();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}},{capture:true});
-    document.getElementById('close-person').addEventListener('click',e=>{if(editing&&dirty){e.stopImmediatePropagation();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}},{capture:true});
+    for(const closeId of ['close-person','show-in-tree'])document.getElementById(closeId).addEventListener('click',e=>{if(editing&&dirty){e.stopImmediatePropagation();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}},{capture:true});
     editButton.onclick=()=>{
       if(!canEdit())return;
       const data=api.state().data,basePerson=structuredClone(data.people.find(p=>p.id===api.selected())),p=structuredClone(api.display?api.display(basePerson):basePerson),language=I.language,baseMarriages=structuredClone(data.relationships.filter(r=>r.personIds.includes(p.id)));
       const baseTranslation=structuredClone(api.state().translations?.[language]?.people?.[p.id]||null);
       let upload=null,removePhoto=false,uploadBusy=false;
-      editing=true;dirty=false;editButton.hidden=true;
+      wasExpanded=dialog.classList.contains('sheet-expanded');dialog.classList.add('sheet-expanded');document.getElementById('toggle-person-size').disabled=true;document.getElementById('toggle-person-size').setAttribute('aria-expanded','true');document.getElementById('toggle-person-size').textContent=t('Zwiń');editing=true;dirty=false;editButton.hidden=true;
       const sorted=data.people.filter(other=>other.id!==p.id).sort((a,b)=>api.name(a).localeCompare(api.name(b),'pl'));
       const options=(selected,multiple=false)=>`${multiple?'':'<option value="">? — brak danych</option>'}`+sorted.map(other=>`<option value="${other.id}" ${Array.isArray(selected)?selected.includes(other.id)?'selected':'':selected===other.id?'selected':''}>${esc(api.name(other))}${other.birthYear?' ('+other.birthYear+')':''}</option>`).join('');
       const fieldset=(legend,body)=>`<fieldset><legend>${legend}</legend><div class="edit-grid">${body}</div></fieldset>`;
@@ -84,11 +84,12 @@ window.GenealogyEditor = (() => {
         for(const field of ['Mommy','Daddy'])changed[field]=value(field)||null;changed.siblings=[...form.elements.siblings.selectedOptions].map(o=>o.value);
         const marriages=[...document.querySelectorAll('.marriage-edit')].map(row=>{const get=key=>row.querySelector('[data-key="'+key+'"]').value;const original=baseMarriages.find(r=>r.id===row.dataset.id);const spouse=get('spouse');return{id:row.dataset.id,type:'małżeństwo',personIds:original?original.personIds.map(id=>id===p.id?id:spouse):[p.id,spouse],status:get('status')||null,startYear:get('startYear')?Number(get('startYear')):null,endYear:get('endYear')?Number(get('endYear')):null,previousRelationshipId:get('previousRelationshipId')||null,sources:lines(get('sources'))};});
         let translation=null;
-        if(language!=='pl'){const values=Object.fromEntries(I.fields.map(key=>[key,structuredClone(changed[key]??null)]));translation={language,source:Object.fromEntries(I.fields.map(key=>[key,basePerson[key]??null])),values};for(const key of I.fields){if(Object.hasOwn(basePerson,key))changed[key]=structuredClone(basePerson[key]);else delete changed[key];}}
+        if(language!=='pl'){const values=Object.fromEntries(I.fields.filter(key=>JSON.stringify(changed[key]??null)!==JSON.stringify(p[key]??null)).map(key=>[key,structuredClone(changed[key]??null)]));if(Object.keys(values).length)translation={language,source:Object.fromEntries(I.fields.map(key=>[key,basePerson[key]??null])),values};for(const key of I.fields){if(Object.hasOwn(basePerson,key))changed[key]=structuredClone(basePerson[key]);else delete changed[key];}}
         validate(changed,data,marriages);save.disabled=true;save.textContent=t('Zapisywanie…');
         const next=await storage.save({person:changed,basePerson,baseMarriages,marriages,photo:upload,removePhoto,translation,baseTranslation});stop();api.apply(next,p.id);api.message(storage.mode==='project'?'Zapisano dane i zdjęcie w folderze projektu.':'Zapisano w tej przeglądarce. „Pobierz zmiany” zapisze kopię do przeniesienia.');
       }catch(e){showError(e.message);}finally{save.disabled=false;save.textContent=t('Zapisz');}};
       if(language!=='pl'){const help=document.createElement('p');help.className='issue';help.textContent=t('Edytujesz tłumaczenie. Daty, zdjęcia i powiązania są wspólne dla wszystkich języków.');form.prepend(help);}
+      const storageNote=document.createElement('p');storageNote.className='edit-storage-note';storageNote.textContent=storage.mode==='project'?t('Zmiany i zdjęcia zapiszą się w folderze projektu.'):t('Zmiany i zdjęcia zapiszą się tylko w tej przeglądarce. Nie zostaną opublikowane automatycznie.');form.querySelector('.edit-help').after(storageNote);
       I.dom(content);dialog.scrollTop=0;form.querySelector('input:not([readonly])')?.focus({preventScroll:true});
     };
     return {refresh,isDirty:()=>editing&&dirty};

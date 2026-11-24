@@ -31,6 +31,7 @@ jobs:
           node tests/test_card_view.cjs
           node tests/test_family_layout.cjs
           node tests/test_layout_cache.cjs
+          node --check web/responsive.js
           node tests/test_card_layout.cjs
           python3 tests/test_hosted_build.py
       - name: Build code with existing Firebase data and photos
