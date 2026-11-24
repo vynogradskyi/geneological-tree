@@ -114,6 +114,30 @@ class EditorPersistenceTest(unittest.TestCase):
         self.assertEqual(entry['values']['notes'],old['values']['notes'])
         self.assertEqual(entry['values']['title'],'Translated title')
 
+    def test_translation_publication_preserves_live_facts_and_media(self):
+        from publish_family import build_translation_update
+        from readonly_assets import DATA_FILE,MANIFEST,ASSETS
+        from urllib.parse import urlsplit
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            shutil.copyfile(ROOT/'index.html',root/'index.html')
+            for asset in ASSETS:
+                path=root/asset;path.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/asset,path)
+            canonical={'id':'synthetic','photo':'photos/synthetic.jpg','notes':'Current Polish note'}
+            payload={'data':{'people':[canonical]},'nodes':{'synthetic':{'x':1}},'thumbnails':{'synthetic':'synthetic-thumbnail'},'issues':[],'isExample':False}
+            files={DATA_FILE:('window.GENEALOGY = '+json.dumps(payload)+';\n').encode(),'photos/synthetic.jpg':b'synthetic original photo'}
+            manifest={'version':1,'files':{name:hashlib.sha256(value).hexdigest() for name,value in files.items()}}
+            translations={'en':{'people':{'synthetic':{'source':{'notes':'Earlier Polish note','title':None},'values':{'notes':'Stale English note','title':'Synthetic title'}}},'issues':{}}}
+            (root/'family-translations.json').write_text(json.dumps(translations))
+            def fetch(url):
+                name=urlsplit(url).path.lstrip('/')
+                return json.dumps(manifest).encode() if name==MANIFEST else files[name]
+            site,next_payload,updated,skipped=build_translation_update(root,fetch)
+            self.assertEqual(next_payload['data'],payload['data']);self.assertEqual(next_payload['thumbnails'],payload['thumbnails'])
+            self.assertEqual((site/'photos/synthetic.jpg').read_bytes(),files['photos/synthetic.jpg'])
+            self.assertEqual((updated,skipped),(1,1))
+            self.assertNotIn('notes',next_payload['translations']['en']['people']['synthetic']['values'])
+
     def test_transport_failure_restores_every_snapshot(self):
         from unittest.mock import patch
         from build_html import write_payload
