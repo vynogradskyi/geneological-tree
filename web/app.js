@@ -149,7 +149,12 @@
   for(const dialog of [personDialog,photoDialog])dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
   let toastTimer;
   function message(text){clearTimeout(toastTimer);const box=$('export-message');box.textContent=text;box.hidden=false;const status=$('person-status');if(personDialog.open){status.textContent=text;status.hidden=false;}toastTimer=setTimeout(()=>{box.hidden=true;status.hidden=true;},7000);}
-  GenealogyEditor.mount({storage,state:()=>G,selected:()=>state.selected,name:fullName,photo:photoSource,open:openPerson,message,onView:callback=>{onPersonView=callback;},apply:(next,id)=>{
+  if(storage.mode==='readonly'){
+    $('edit-person')?.remove();
+    $('download-changes')?.remove();
+    $('download-stale')?.remove();
+    $('save-mode').textContent='Wersja tylko do odczytu';
+  }else GenealogyEditor.mount({storage,state:()=>G,selected:()=>state.selected,name:fullName,photo:photoSource,open:openPerson,message,onView:callback=>{onPersonView=callback;},apply:(next,id)=>{
     Object.assign(G,structuredClone(next));people.clear();G.data.people.forEach(p=>people.set(p.id,p));cardLayout.refresh();drawTree();focusPerson(id,state.scale);openPerson(id);
   }});
   const search=$('person-search'),results=$('search-results');

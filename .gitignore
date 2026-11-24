@@ -11,6 +11,10 @@ venv/
 /tmp/
 /backups/
 /output/
+/.firebase/
+firebase-debug*.log
+ui-debug*.log
+*-firebase-adminsdk-*.json
 
 # Private family records and media stay on this computer.
 /family-tree.json

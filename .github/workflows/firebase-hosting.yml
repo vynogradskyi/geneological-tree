@@ -1,0 +1,38 @@
+name: Deploy read-only family tree
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting-live
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check viewer and preservation logic
+        run: |
+          node --check web/app.js
+          node --check web/viewer-storage.js
+          node tests/test_card_layout.cjs
+          python3 tests/test_hosted_build.py
+      - name: Build code with existing Firebase data and photos
+        run: python3 scripts/build_hosted.py --source https://familytree-9505c.web.app
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0
+        with:
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FAMILYTREE_9505C }}'
+          projectId: familytree-9505c
+          channelId: live
+          firebaseToolsVersion: 15.37.0
