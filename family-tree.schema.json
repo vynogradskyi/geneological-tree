@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dane projektu szkolnego „Moje drzewo genealogiczne”",
+  "description": "Dane krewnych w języku polskim. Powiązania rodzinne wskazują stałe identyfikatory osób.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "version",
+    "language",
+    "rootPersonId",
+    "people",
+    "relationships"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./family-tree.schema.json"
+    },
+    "version": {
+      "const": "1.2"
+    },
+    "rootPersonId": {
+      "description": "ID dziecka, dla którego powstaje drzewo. Wartość null, jeśli jeszcze nieznane.",
+      "$ref": "#/$defs/nullablePersonRef"
+    },
+    "people": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/person"
+      }
+    },
+    "language": {
+      "const": "pl",
+      "description": "Język wszystkich danych tekstowych o rodzinie: polski."
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/marriage"
+      }
+    }
+  },
+  "$defs": {
+    "personId": {
+      "type": "string",
+      "pattern": "^person_[0-9]{4,}$"
+    },
+    "nullablePersonRef": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/personId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableText": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "nullableYear": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 9999
+    },
+    "person": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "patronymic",
+        "maidenName",
+        "formerLastNames",
+        "birthYear",
+        "deathYear",
+        "isLiving",
+        "birthPlace",
+        "Mommy",
+        "Daddy",
+        "siblings",
+        "photo",
+        "sources",
+        "notes",
+        "birthDate",
+        "deathDate",
+        "deathPlace"
+      ],
+      "properties": {
+        "id": {
+          "description": "Unikalny, stały identyfikator osoby. Nie zmienia się po uzupełnieniu imienia lub nazwiska.",
+          "$ref": "#/$defs/personId"
+        },
+        "firstName": {
+          "$ref": "#/$defs/nullableText"
+        },
+        "lastName": {
+          "$ref": "#/$defs/nullableText"
+        },
+        "maidenName": {
+          "description": "Nazwisko panieńskie; null, jeśli nieznane lub nie dotyczy.",
+          "$ref": "#/$defs/nullableText"
+        },
+        "birthYear": {
+          "$ref": "#/$defs/nullableYear"
+        },
+        "deathYear": {
+          "description": "Rok śmierci. Wartość null, jeśli nieznany lub osoba żyje.",
+          "$ref": "#/$defs/nullableYear"
+        },
+        "isLiving": {
+          "description": "true — osoba żyje, false — osoba zmarła, null — brak informacji.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "birthPlace": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "city",
+            "country",
+            "region"
+          ],
+          "properties": {
+            "city": {
+              "$ref": "#/$defs/nullableText",
+              "description": "Miejscowość urodzenia: miasto lub wieś. Nazwa w języku polskim."
+            },
+            "country": {
+              "$ref": "#/$defs/nullableText"
+            },
+            "region": {
+              "description": "Region urodzenia, np. obwód czerkaski; null, jeśli nie podano.",
+              "$ref": "#/$defs/nullableText"
+            }
+          }
+        },
+        "Mommy": {
+          "description": "ID matki z listy people; null, jeśli powiązanie nie jest znane.",
+          "$ref": "#/$defs/nullablePersonRef"
+        },
+        "Daddy": {
+          "description": "ID ojca z listy people; null, jeśli powiązanie nie jest znane.",
+          "$ref": "#/$defs/nullablePersonRef"
+        },
+        "siblings": {
+          "description": "Znane ID rodzeństwa. Pusta lista oznacza brak zapisanych powiązań; potwierdzony brak rodzeństwa należy opisać w notes.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/personId"
+          }
+        },
+        "photo": {
+          "description": "Względna ścieżka do zapisanego zdjęcia, np. photos/person_0001.jpg; null, jeśli brak zdjęcia.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^photos/[^/\\\\]+\\.[A-Za-z0-9]+$"
+        },
+        "sources": {
+          "description": "Źródła informacji: osoba przekazująca dane, dokument lub inny materiał. Należy wskazać, jakie dane potwierdza źródło. Opisy w języku polskim.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "notes": {
+          "description": "Uzupełnienia, przybliżone daty, rozbieżności i pytania do dalszych badań. Tekst w języku polskim.",
+          "$ref": "#/$defs/nullableText"
+        },
+        "formerLastNames": {
+          "description": "Znane poprzednie nazwiska inne niż nazwisko panieńskie. Pusta lista oznacza brak zapisanych informacji.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "patronymic": {
+          "$ref": "#/$defs/nullableText",
+          "description": "Patronimik, jeśli podany i potwierdzony. Nie dowodzi tożsamości ojca."
+        },
+        "birthDate": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "deathDate": {
+          "$ref": "#/$defs/nullableDate"
+        },
+        "deathPlace": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "city",
+            "country",
+            "region"
+          ],
+          "properties": {
+            "city": {
+              "$ref": "#/$defs/nullableText",
+              "description": "Miejscowość śmierci: miasto lub wieś."
+            },
+            "country": {
+              "$ref": "#/$defs/nullableText"
+            },
+            "region": {
+              "description": "Region miejsca śmierci; null, jeśli nie podano.",
+              "$ref": "#/$defs/nullableText"
+            }
+          },
+          "description": "Miejsce śmierci; niezależne od miejsca urodzenia. Nieznane części pozostają null."
+        },
+        "title": {
+          "description": "Tytuł podany w źródle lub przez użytkownika; nie jest częścią nazwiska.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "occupation": {
+          "description": "Zawód lub działalność podane w źródłach, po polsku.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deathCircumstances": {
+          "description": "Okoliczności śmierci podane w źródłach, po polsku.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "birthDateNote": {
+          "description": "Potwierdzony opis niepełnej daty; nie zastępuje dokładnej daty.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deathDateNote": {
+          "description": "Potwierdzony opis niepełnej daty; nie zastępuje dokładnej daty.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "marriage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "personIds",
+        "status",
+        "startYear",
+        "endYear",
+        "previousRelationshipId",
+        "sources"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^relation_[0-9]{4,}$"
+        },
+        "type": {
+          "const": "małżeństwo"
+        },
+        "personIds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/personId"
+          }
+        },
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "trwa",
+            "rozwiedzeni",
+            "zakończone",
+            null
+          ],
+          "description": "Stan małżeństwa; null, jeśli aktualny stan nie jest znany."
+        },
+        "startYear": {
+          "$ref": "#/$defs/nullableYear"
+        },
+        "endYear": {
+          "$ref": "#/$defs/nullableYear"
+        },
+        "previousRelationshipId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^relation_[0-9]{4,}$",
+          "description": "Wcześniejsze małżeństwo jednego z małżonków, jeśli kolejność jest znana."
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "nullableDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?$",
+      "description": "Data o znanej dokładności: RRRR, RRRR-MM lub RRRR-MM-DD. Nie dopisujemy nieznanych miesięcy ani dni."
+    }
+  }
+}

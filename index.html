@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Moje drzewo genealogiczne · Joanna Vynogradska</title>
+  <link rel="stylesheet" href="web/styles.css">
+  <script defer src="web/vendor/pdf-lib.min.js"></script>
+  <script defer src="web/family-data.js"></script>
+  <script defer src="web/vendor/jszip.min.js"></script>
+  <script defer src="web/vendor/viz-global.js"></script>
+  <script defer src="web/dates.js"></script>
+  <script defer src="web/editor-storage.js"></script>
+  <script defer src="web/editor.js"></script>
+  <script defer src="web/card-layout.js"></script>
+  <script defer src="web/app.js"></script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="identity"><span class="eyebrow">HISTORIA MOJEJ RODZINY</span><h1>Moje drzewo genealogiczne</h1><p>Autorka: Joanna Vynogradska <span class="separator">·</span> <span id="summary"></span></p></div>
+    <button class="primary" id="download-pdf" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span>Pobierz PDF</span></button>
+  </header>
+  <main>
+    <div class="editor-status"><span id="save-mode" role="status">Wczytywanie danych…</span><div><button id="download-changes" type="button" hidden>Pobierz zmiany (.zip)</button><button id="download-stale" type="button" hidden>Pobierz wcześniejsze zmiany</button></div></div>
+    <section class="toolbar" aria-label="Sterowanie drzewem">
+      <div class="search-box"><label for="person-search" class="sr-only">Znajdź osobę</label><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="person-search" type="search" placeholder="Znajdź osobę…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><div id="search-results" class="search-results" hidden></div></div>
+      <div class="view-controls"><button id="go-root" type="button">Joanna</button><button id="fit-tree" type="button">Całe drzewo</button><div class="zoom-controls"><button id="zoom-out" type="button" aria-label="Pomniejsz">−</button><span id="zoom-label">100%</span><button id="zoom-in" type="button" aria-label="Powiększ">+</button></div></div>
+    </section>
+    <section class="layout-toolbar" aria-label="Układ kart">
+      <div class="layout-mode"><button id="toggle-card-drag" type="button" aria-pressed="true">Przesuwanie kart: włączone</button><span id="layout-hint">Przeciągnij kartę myszą w poziomie. Tło przesuwa drzewo.</span></div>
+      <div class="layout-history"><button id="undo-layout" type="button" disabled title="⌘Z / Ctrl+Z">Cofnij</button><button id="redo-layout" type="button" disabled title="⌘⇧Z / Ctrl+Y">Ponów</button><button id="reset-layout" type="button" disabled>Układ początkowy</button></div>
+    </section>
+    <section id="viewport" class="viewport" aria-label="Interaktywne drzewo genealogiczne"><div class="map-hint">Mysz: karta w lewo / w prawo · Tło: całe drzewo · Kliknięcie: szczegóły</div><div id="world" class="world"><svg id="connections" aria-hidden="true"></svg><div id="people"></div></div></section>
+    <footer class="page-footer"><div class="legend"><span><i class="father"></i>Linia ojca</span><span><i class="mother"></i>Linia matki</span><span><i class="marriage"></i>Małżeństwo</span><span><i class="sibling"></i>Rodzeństwo bez wspólnej linii rodziców</span></div><p>Wersja robocza · <span id="updated-on"></span> · Nieznane dane pozostają oznaczone.</p></footer>
+  </main>
+  <dialog id="person-dialog" class="person-dialog" aria-labelledby="person-name"><header class="dialog-bar"><span>KARTA OSOBY</span><div class="dialog-actions"><button id="edit-person" type="button">Edit</button><button id="close-person" class="icon-button" aria-label="Zamknij kartę osoby" type="button">×</button></div></header><div id="person-status" class="person-status" role="status" hidden></div><div id="person-details"></div></dialog>
+  <dialog id="photo-dialog" class="photo-dialog" aria-label="Powiększone zdjęcie"><button id="close-photo" class="icon-button" aria-label="Zamknij zdjęcie" type="button">×</button><img id="full-photo" alt=""></dialog>
+  <div id="announcer" class="sr-only" aria-live="polite"></div><div id="export-message" class="export-message" role="status" hidden></div>
+  <noscript>Włącz JavaScript, aby przeglądać drzewo i pobierać PDF.</noscript>
+</body>
+</html>

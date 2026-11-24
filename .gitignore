@@ -1,0 +1,22 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Local previews, tests, manual recovery copies, and generated documents.
+/tmp/
+/backups/
+/output/
+
+# Private family records and media stay on this computer.
+/family-tree.json
+/family-tree-review.json
+/web/family-data.js
+/task.md
+/sources/
+/photos/*
+!/photos/.gitkeep
