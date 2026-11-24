@@ -17,7 +17,7 @@ import webbrowser
 from zoneinfo import ZoneInfo
 from PIL import Image
 from build_html import build_payload, write_payload
-from tree_json import FIELDS, load_translations
+from tree_json import FIELDS, load_translations, merge_translation, translation_digest
 from editor_validation import validate_document
 
 MAX_BODY = 38 * 1024 * 1024
@@ -59,7 +59,7 @@ class EditorHandler(SimpleHTTPRequestHandler):
         if urlparse(self.path).path == '/api/state':
             with self.server.edit_lock:
                 current_hash = hashlib.sha256((self.root/'family-tree.json').read_bytes()).hexdigest()
-                if current_hash != self.server.payload['sourceSha256']:
+                if current_hash != self.server.payload['sourceSha256'] or translation_digest(load_translations(self.root)) != self.server.payload.get('translationSha256'):
                     self.server.payload = build_payload(self.root)
                     write_payload(self.root, self.server.payload)
                 payload = self.server.payload
@@ -115,7 +115,7 @@ class EditorHandler(SimpleHTTPRequestHandler):
             source={key:original.get(key) for key in FIELDS}
             if lang not in ('ru','en') or entry.get('source')!=source or not isinstance(entry.get('values'),dict) or not set(entry['values'])<=set(FIELDS):
                 raise ValueError('Nieprawidłowe tłumaczenie.')
-            translations.setdefault(lang,{'language':lang,'people':{},'issues':{}})['people'][pid]={'source':source,'values':entry['values']}
+            merge_translation(translations,pid,entry)
         photo_bytes = None
         new_photo = None
         if request.get('photo'):

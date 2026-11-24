@@ -11,13 +11,14 @@
   <script defer src="web/locale-bundle.js"></script>
   <script defer src="web/i18n.js"></script>
   <script defer src="web/vendor/jszip.min.js"></script>
-  <script defer src="web/vendor/viz-global.js"></script>
   <script defer src="web/dates.js"></script>
   <script defer src="web/editor-storage.js"></script>
   <script defer src="web/editor.js"></script>
   <script defer src="web/family-auth.js"></script>
   <script defer src="web/card-metrics.js"></script>
   <script defer src="web/card-view.js"></script>
+  <script defer src="web/line-routing.js"></script>
+  <script defer src="web/family-layout.js"></script>
   <script defer src="web/card-layout.js"></script>
   <script defer src="web/app.js"></script>
 </head>
@@ -35,8 +36,9 @@
     <section class="layout-toolbar" aria-label="Układ kart">
       <div class="layout-mode"><button id="toggle-card-drag" type="button" aria-pressed="true">Przesuwanie kart: włączone</button><span id="layout-hint">Przeciągnij kartę myszą w poziomie. Tło przesuwa drzewo.</span></div>
       <div class="layout-history"><button id="undo-layout" type="button" disabled title="⌘Z / Ctrl+Z">Cofnij</button><button id="redo-layout" type="button" disabled title="⌘⇧Z / Ctrl+Y">Ponów</button><button id="reset-layout" type="button" disabled>Układ początkowy</button></div>
+      <div id="layout-backup-notice" hidden><p>Układ został zaktualizowany. Wcześniejsze rozmieszczenie zachowano jako kopię.</p><button id="download-layout-backup" type="button">Pobierz wcześniejszy układ</button></div>
     </section>
-    <section id="viewport" class="viewport" aria-label="Interaktywne drzewo genealogiczne"><div class="map-hint">Mysz: karta w lewo / w prawo · Tło: całe drzewo · Kliknięcie: szczegóły</div><div id="world" class="world"><svg id="connections" aria-hidden="true"></svg><div id="people"></div></div></section>
+    <section id="viewport" class="viewport" aria-label="Interaktywne drzewo genealogiczne"><div class="map-hint">Mysz: karta w lewo / w prawo · Tło: całe drzewo · Kliknięcie: szczegóły</div><button id="mobile-layout-exit" type="button" hidden>Zakończ przesuwanie kart</button><div id="world" class="world"><svg id="connections" aria-hidden="true"></svg><div id="people"></div></div></section>
     <footer class="page-footer"><div class="legend"><span><i class="father"></i>Linia ojca</span><span><i class="mother"></i>Linia matki</span><span><i class="marriage"></i>Małżeństwo</span><span><i class="sibling"></i>Rodzeństwo bez wspólnej linii rodziców</span></div><p>Wersja robocza · <span id="updated-on"></span> · Nieznane dane pozostają oznaczone.</p></footer>
   </main>
   <dialog id="person-dialog" class="person-dialog" aria-labelledby="person-name"><header class="dialog-bar"><span>KARTA OSOBY</span><div class="dialog-actions"><button id="edit-person" type="button">Edit</button><button id="close-person" class="icon-button" aria-label="Zamknij kartę osoby" type="button">×</button></div></header><div id="person-status" class="person-status" role="status" hidden></div><div id="person-details"></div></dialog>

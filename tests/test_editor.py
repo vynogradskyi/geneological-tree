@@ -100,6 +100,36 @@ class EditorPersistenceTest(unittest.TestCase):
         self.assertIsNone(next(p for p in self.data()['people'] if p['id']=='person_0055')['photo'])
         self.assertTrue((self.root/saved['photo']).exists(), 'Removing an assignment must preserve the photo file')
 
+    def test_partial_translation_preserves_stale_fields(self):
+        from tree_json import FIELDS
+        req=self.request('person_0003');source={key:req['person'].get(key) for key in FIELDS}
+        translations_path=self.root/'family-translations.json'
+        translations=json.loads(translations_path.read_text()) if translations_path.exists() else {}
+        old={'source':{'notes':'Earlier Polish text'},'values':{'notes':'Earlier English translation'}}
+        translations.setdefault('en',{'language':'en','people':{},'issues':{}})['people']['person_0003']=copy.deepcopy(old)
+        translations_path.write_text(json.dumps(translations))
+        req['baseTranslation']=old;req['translation']={'language':'en','source':source,'values':{'title':'Translated title'}}
+        state=self.handler.save_person(req);entry=state['translations']['en']['people']['person_0003']
+        self.assertEqual(entry['source']['notes'],old['source']['notes'])
+        self.assertEqual(entry['values']['notes'],old['values']['notes'])
+        self.assertEqual(entry['values']['title'],'Translated title')
+
+    def test_transport_failure_restores_every_snapshot(self):
+        from unittest.mock import patch
+        from build_html import write_payload
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);payload={'data':{'people':[]},'nodes':{},'translations':{},'version':'before'}
+            write_payload(root,payload)
+            before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+            payload['version']='after';original_replace=Path.replace
+            def fail_one(path,target):
+                if path.name=='tree.ru.json.tmp':raise OSError('Synthetic write failure')
+                return original_replace(path,target)
+            with patch.object(Path,'replace',fail_one):
+                with self.assertRaises(OSError):write_payload(root,payload)
+            for path,content in before.items():self.assertEqual(path.read_bytes(),content)
+            self.assertFalse(list(root.rglob('*.tmp')))
+
     def test_translation_preserves_canonical_records_and_detects_conflict(self):
         from tree_json import FIELDS
         req=self.request('person_0007')

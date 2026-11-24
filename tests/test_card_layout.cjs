@@ -1,5 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
-const context={window:{},structuredClone};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/card-layout.js'),'utf8'),context);const{resolveRow,routeEdges}=context.window.GenealogyCardLayout;
+const context={window:{},structuredClone};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/line-routing.js'),'utf8'),context);vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/card-layout.js'),'utf8'),context);const{resolveRow,routeEdges}=context.window.GenealogyCardLayout;
 for(let size=1;size<=12;size++)for(let active=0;active<size;active++)for(const x of [-300,20,150,400,1500,4000]){
  const nodes={},row=[];for(let i=0;i<size;i++){const id='p'+i;row.push(id);nodes[id]={x:20+i*170,y:300,w:150,h:234};}
  const result=resolveRow(nodes,row,'p'+active,x),sorted=Object.keys(result).sort((a,b)=>result[a]-result[b]);assert.equal(Object.keys(result).length,size);assert(result[sorted[0]]>=20);for(let i=1;i<size;i++)assert(result[sorted[i]]>=result[sorted[i-1]]+150+18-1e-6);assert.equal(nodes['p'+active].y,300);

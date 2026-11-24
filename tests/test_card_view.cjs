@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const context={window:{},structuredClone};vm.createContext(context);
-for(const name of ['card-metrics','card-view'])vm.runInContext(fs.readFileSync(`web/${name}.js`,'utf8'),context);
+for(const name of ['card-metrics','card-view','line-routing'])vm.runInContext(fs.readFileSync(`web/${name}.js`,'utf8'),context);
 const view=context.window.GenealogyCardView,metrics=context.window.GenealogyCardMetrics;
 const original={data:{people:[{id:'p',photo:'photos/synthetic.png'}]},nodes:{p:{x:30,y:60,w:150,h:234}},width:300,height:600,ranks:{p:0},edges:[{kind:'parent',tail:'p',head:'f',paths:[[[105,294],[105,310],[120,330],[120,340]]],labels:[{text:'synthetic',x:105,y:35}]}]};
 const data=JSON.stringify(original.data),cache={signature:JSON.stringify({nodes:Object.entries(original.nodes),edges:original.edges.map(e=>[e.kind,e.tail,e.head]),ranks:Object.entries(original.ranks)}),positions:{p:90}};

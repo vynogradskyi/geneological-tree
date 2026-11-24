@@ -9,34 +9,13 @@ import json
 import os
 from PIL import Image, ImageOps
 from genealogy_layout import create_layout
-from tree_json import load_translations, write_json_payload
+from tree_json import load_translations, write_json_payload, language_payloads, translation_digest
 
 def build_payload(root=None, data=None, review=None):
     ROOT = Path(root or Path(__file__).resolve().parents[1])
     data = data if data is not None else json.loads((ROOT / 'family-tree.json').read_text())
     review = review if review is not None else json.loads((ROOT / 'family-tree-review.json').read_text())
-    graph, ranks, branches, direct, generations = create_layout(data, ROOT / 'tmp/web/layout')
-    width, height = map(float, graph['bb'].split(',')[2:])
-    objects = {obj['_gvid']: obj for obj in graph['objects']}
-    nodes = {}
-    for obj in graph['objects']:
-        if not obj['name'].startswith('person_') or 'pos' not in obj:
-            continue
-        x, y = map(float, obj['pos'].split(','))
-        w, h = float(obj['width']) * 72, float(obj['height']) * 72
-        nodes[obj['name']] = {'x': x-w/2, 'y': height-y-h/2, 'w': w, 'h': h}
-    edges = []
-    for edge in graph['edges']:
-        if edge.get('style') == 'invis' or not edge.get('kind'):
-            continue
-        paths = []
-        for drawing in edge.get('_draw_', []):
-            if drawing['op'] == 'b':
-                paths.append([[x, height-y] for x, y in drawing['points']])
-        labels = [{'text': d['text'], 'x': d['pt'][0], 'y': height-d['pt'][1]}
-                  for d in edge.get('_ldraw_', []) if d['op'] == 'T']
-        edges.append({'kind': edge['kind'], 'paths': paths, 'labels': labels,
-                      'tail': objects[edge['tail']]['name'], 'head': objects[edge['head']]['name']})
+    layout=create_layout(data)
     thumbnails = {}
     for p in data['people']:
         if not p['photo']:
@@ -66,10 +45,8 @@ def build_payload(root=None, data=None, review=None):
     translations=load_translations(ROOT)
     payload = {
         'translations': translations,
-        'translationSha256': hashlib.sha256(json.dumps(translations,ensure_ascii=False,sort_keys=True).encode()).hexdigest(),
-        'data': data, 'nodes': nodes, 'edges': edges, 'width': width, 'height': height,
-        'ranks': ranks, 'branches': branches, 'direct': sorted(direct),
-        'generations': generations, 'thumbnails': thumbnails,
+        'translationSha256': translation_digest(translations),
+        'data': data, **layout, 'thumbnails': thumbnails,
         'isExample': review.get('isExample', False),
         'disconnectedPeople': sorted(set(adjacency) - connected),
         'issues': [q for q in review['issues'] if q['status'] == 'otwarte'],
@@ -77,17 +54,30 @@ def build_payload(root=None, data=None, review=None):
         'updatedOn': datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y'),
         'sourceSha256': hashlib.sha256(json.dumps(data, ensure_ascii=False, indent=2).encode()+b'\n').hexdigest(),
     }
-    assert len(nodes) == len(data['people'])
+    assert len(layout['nodes']) == len(data['people'])
     return payload
 
 
 def write_payload(root, payload):
-    target = Path(root) / 'web/family-data.js'
-    encoded = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
-    temp = target.with_suffix('.js.tmp')
-    temp.write_text('window.GENEALOGY = ' + encoded + ';\n')
-    temp.replace(target)
-    write_json_payload(root,payload)
+    root=Path(root)
+    encoded=json.dumps(payload,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
+    outputs={root/'web/family-data.js':'window.GENEALOGY = '+encoded+';\n',
+             root/'data/tree.json':json.dumps({k:v for k,v in payload.items() if k!='translations'},ensure_ascii=False,separators=(',',':'))+'\n'}
+    outputs.update({root/f'data/tree.{lang}.json':json.dumps(value,ensure_ascii=False,separators=(',',':'))+'\n' for lang,value in language_payloads(payload).items()})
+    previous={path:path.read_bytes() if path.exists() else None for path in outputs}
+    staged={}
+    try:
+        for path,text in outputs.items():
+            path.parent.mkdir(parents=True,exist_ok=True)
+            temp=path.with_suffix(path.suffix+'.tmp');staged[path]=temp;temp.write_text(text)
+        for path,temp in staged.items():temp.replace(path)
+    except Exception:
+        for path,content in previous.items():
+            if content is None:path.unlink(missing_ok=True)
+            else:path.write_bytes(content)
+        raise
+    finally:
+        for temp in staged.values():temp.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':

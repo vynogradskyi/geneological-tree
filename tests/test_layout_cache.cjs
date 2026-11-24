@@ -1,0 +1,12 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,{hidden:false,setAttribute(){},classList:{toggle(){}}});return elements.get(id);};
+const store=new Map(),key='genealogy-card-layout-v1:/root',legacy={signature:'old-layout',positions:{root:500},enabled:true};store.set(key,JSON.stringify(legacy));
+const context={window:{GenealogyResponsive:{mobile:false}},structuredClone,matchMedia:()=>({matches:false}),location:{pathname:'/'},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},document:{getElementById:element,body:element('body'),addEventListener(){},querySelector:()=>null}};
+vm.createContext(context);for(const name of ['card-metrics','line-routing','card-layout'])vm.runInContext(fs.readFileSync(`web/${name}.js`,'utf8'),context);
+const model={data:{rootPersonId:'root'},nodes:{root:{x:100,y:64,w:200,h:312}},edges:[],width:1000,height:600,ranks:{root:0},layoutPolicy:{version:2,areas:{a:{left:0,right:1000}},personAreas:{root:'a'},rowOrder:{0:['root']},pairs:[]}};
+const api=context.window.GenealogyCardLayout.create({model,onChange(){}});
+assert.deepEqual(JSON.parse(store.get(key+':previous')),legacy);assert.equal(element('layout-backup-notice').hidden,false);
+api.start('root');api.move(200);api.finish();assert.equal(model.nodes.root.x,200);assert.deepEqual(JSON.parse(store.get(key+':previous')),legacy);assert.equal(JSON.parse(store.get(key)).version,2);
+api.undo();assert.equal(model.nodes.root.x,100);api.redo();assert.equal(model.nodes.root.x,200);api.reset();assert.equal(model.nodes.root.x,100);
+api.setMobile(true);assert.equal(api.isEnabled(),false);api.toggle();assert.equal(api.isEnabled(),true);
+console.log('Layout cache: incompatible placement archived, constrained edits undo/redo, and explicit mobile arranging verified.');
