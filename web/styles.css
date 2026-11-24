@@ -12,3 +12,6 @@
 /* Reserve space for layout controls after the editor's responsive rules. */
 .viewport{height:calc(100dvh - 344px)}
 @media(max-width:760px){.viewport{height:calc(100dvh - 505px)}}
+
+.header-actions,.family-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}.header-actions{flex-shrink:0;max-width:50%}.family-controls[hidden],.family-controls button[hidden]{display:none}.family-controls span{font-size:14px}.family-dialog{width:min(440px,calc(100vw - 28px));padding:26px;border:1px solid var(--border);border-radius:16px;color:inherit;background:#fffefc}.family-dialog::backdrop{background:#172c245c;backdrop-filter:blur(2px)}.family-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:12px}.family-dialog h2{font-size:28px}.family-dialog>p{font-size:14px;line-height:1.6;color:var(--muted);margin:16px 0}.family-dialog form{display:grid;gap:16px}.family-dialog input{font-size:16px}.family-dialog .primary{justify-content:center}
+@media(max-width:760px){.page-header{flex-wrap:wrap}.header-actions{max-width:100%;width:100%;justify-content:space-between}.family-controls{justify-content:flex-start}.family-controls span{overflow-wrap:anywhere}}

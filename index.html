@@ -13,13 +13,14 @@
   <script defer src="web/dates.js"></script>
   <script defer src="web/editor-storage.js"></script>
   <script defer src="web/editor.js"></script>
+  <script defer src="web/family-auth.js"></script>
   <script defer src="web/card-layout.js"></script>
   <script defer src="web/app.js"></script>
 </head>
 <body>
   <header class="page-header">
     <div class="identity"><span class="eyebrow">HISTORIA MOJEJ RODZINY</span><h1>Moje drzewo genealogiczne</h1><p>Autor/Autorka: <span id="author-name"></span> <span class="separator">·</span> <span id="summary"></span></p></div>
-    <button class="primary" id="download-pdf" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span>Pobierz PDF</span></button>
+    <div class="header-actions"><div id="family-controls" class="family-controls" hidden><span id="family-greeting" role="status"></span><button id="family-login" type="button">Jestem z rodziny</button><button id="family-logout" type="button" hidden>Wyloguj</button></div><button class="primary" id="download-pdf" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span>Pobierz PDF</span></button></div>
   </header>
   <main>
     <div class="editor-status"><span id="save-mode" role="status">Wczytywanie danych…</span><div><button id="download-changes" type="button" hidden>Pobierz zmiany (.zip)</button><button id="download-stale" type="button" hidden>Pobierz wcześniejsze zmiany</button></div></div>
@@ -35,6 +36,7 @@
     <footer class="page-footer"><div class="legend"><span><i class="father"></i>Linia ojca</span><span><i class="mother"></i>Linia matki</span><span><i class="marriage"></i>Małżeństwo</span><span><i class="sibling"></i>Rodzeństwo bez wspólnej linii rodziców</span></div><p>Wersja robocza · <span id="updated-on"></span> · Nieznane dane pozostają oznaczone.</p></footer>
   </main>
   <dialog id="person-dialog" class="person-dialog" aria-labelledby="person-name"><header class="dialog-bar"><span>KARTA OSOBY</span><div class="dialog-actions"><button id="edit-person" type="button">Edit</button><button id="close-person" class="icon-button" aria-label="Zamknij kartę osoby" type="button">×</button></div></header><div id="person-status" class="person-status" role="status" hidden></div><div id="person-details"></div></dialog>
+  <dialog id="family-dialog" class="family-dialog" aria-labelledby="family-title"><div class="family-dialog-header"><h2 id="family-title">Jestem z rodziny</h2><button id="family-close" class="icon-button" type="button" aria-label="Zamknij">×</button></div><p>Prototyp rodzinny. Zmiany i zdjęcia zapisują się tylko w tej przeglądarce; możesz je pobrać jako ZIP.</p><form id="family-login-form"><label class="edit-field"><span>Login</span><input id="family-username" name="username" autocomplete="username" required></label><label class="edit-field"><span>Hasło</span><input name="password" type="password" autocomplete="current-password" required></label><p id="family-login-error" class="edit-error" role="alert" hidden></p><button id="family-submit" class="primary" type="submit">Zaloguj</button></form></dialog>
   <dialog id="photo-dialog" class="photo-dialog" aria-label="Powiększone zdjęcie"><button id="close-photo" class="icon-button" aria-label="Zamknij zdjęcie" type="button">×</button><img id="full-photo" alt=""></dialog>
   <div id="announcer" class="sr-only" aria-live="polite"></div><div id="export-message" class="export-message" role="status" hidden></div>
   <noscript>Włącz JavaScript, aby przeglądać drzewo i pobierać PDF.</noscript>

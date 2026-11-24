@@ -47,4 +47,4 @@ if __name__ == '__main__':
     print(f'Read-only upload: {site}')
     print(f'ZIP: {archive}')
     print(f"{len(payload['data']['people'])} people; {len(payload['thumbnails'])} portraits. "
-          'No editor, backend, source screenshots, or Git metadata included.')
+          'Browser editor prototype included; no backend, source screenshots, or Git metadata.')

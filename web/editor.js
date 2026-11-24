@@ -24,16 +24,24 @@ window.GenealogyEditor = (() => {
     let editing=false,dirty=false;
     const editButton=document.getElementById('edit-person'),content=document.getElementById('person-details'),dialog=document.getElementById('person-dialog');
     const storage=api.storage,mode=document.getElementById('save-mode'),exportButton=document.getElementById('download-changes');
-    mode.textContent=storage.mode==='project'?'Edytor projektu · zmiany i zdjęcia zapisują się w folderze projektu':'Tryb HTML · zmiany zapisują się w tej przeglądarce. Pobierz zmiany, aby przenieść je do folderu projektu.';
-    if(api.state().isExample)mode.textContent='Przykład demonstracyjny · '+mode.textContent;
-    exportButton.hidden=storage.mode==='project';exportButton.onclick=async()=>{exportButton.disabled=true;try{await storage.exportChanges();}catch(error){api.message(error.message);}finally{exportButton.disabled=false;}};
-    if(storage.staleBackup){const stale=document.getElementById('download-stale');stale.hidden=false;stale.onclick=()=>storage.exportChanges(true);mode.textContent+=' Dostępna jest wcześniejsza kopia zmian do pobrania.';}
-    function stop(){editing=false;dirty=false;editButton.hidden=false;}
+    const canEdit=()=>!api.canEdit||api.canEdit();
+    function refresh(){
+      mode.textContent=!canEdit()?'Wersja tylko do odczytu':api.isFamily?'Prototyp rodzinny · zmiany i zdjęcia tylko w tej przeglądarce. Pobierz ZIP, aby je przenieść.':storage.mode==='project'?'Edytor projektu · zmiany i zdjęcia zapisują się w folderze projektu':'Tryb HTML · zmiany zapisują się w tej przeglądarce. Pobierz zmiany, aby przenieść je do folderu projektu.';
+      if(api.state().isExample)mode.textContent='Przykład demonstracyjny · '+mode.textContent;
+      editButton.hidden=!canEdit()||editing;
+      exportButton.hidden=!canEdit()||storage.mode==='project';
+      document.getElementById('download-stale').hidden=!canEdit()||!storage.staleBackup;
+    }
+    exportButton.onclick=async()=>{if(!canEdit())return;exportButton.disabled=true;try{await storage.exportChanges();}catch(error){api.message(error.message);}finally{exportButton.disabled=false;}};
+    document.getElementById('download-stale').onclick=()=>{if(canEdit())storage.exportChanges(true);};
+    function stop(){editing=false;dirty=false;refresh();}
+    refresh();
     api.onView(stop);
     dialog.addEventListener('cancel',e=>{if(editing&&dirty){e.preventDefault();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}});
     dialog.addEventListener('click',e=>{if(!editing||!dirty||e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){e.stopImmediatePropagation();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}},{capture:true});
     document.getElementById('close-person').addEventListener('click',e=>{if(editing&&dirty){e.stopImmediatePropagation();api.message('Masz niezapisane zmiany. Użyj „Zapisz” albo „Anuluj”.');}},{capture:true});
     editButton.onclick=()=>{
+      if(!canEdit())return;
       const data=api.state().data,p=structuredClone(data.people.find(p=>p.id===api.selected())),basePerson=structuredClone(p),baseMarriages=structuredClone(data.relationships.filter(r=>r.personIds.includes(p.id)));
       let upload=null,removePhoto=false,uploadBusy=false;
       editing=true;dirty=false;editButton.hidden=true;
@@ -65,6 +73,7 @@ window.GenealogyEditor = (() => {
       document.getElementById('remove-photo').onchange=e=>{removePhoto=e.target.checked;if(removePhoto){upload=null;document.getElementById('edit-photo-file').value='';photoPreview.hidden=true;document.getElementById('edit-photo-empty').hidden=false;}else if(p.photo){photoPreview.src=api.photo(p);photoPreview.hidden=false;document.getElementById('edit-photo-empty').hidden=true;}};
       document.getElementById('cancel-edit').onclick=()=>{stop();api.open(p.id);};
       form.onsubmit=async event=>{event.preventDefault();const save=document.getElementById('save-person');if(save.disabled)return;if(uploadBusy){showError('Poczekaj na wczytanie podglądu zdjęcia.');return;}error.hidden=true;try{
+        if(!canEdit())throw Error('Zaloguj się ponownie.');
         const changed=structuredClone(basePerson),value=name=>form.elements[name].value;
         for(const[key]of textFields)changed[key]=nullable(value(key));changed.formerLastNames=[...new Set(lines(value('formerLastNames')))];changed.sources=lines(value('sources'));changed.notes=nullable(value('notes'));changed.deathCircumstances=nullable(value('deathCircumstances'));
         for(const prefix of ['birth','death']){const raw=value(prefix+'Date').trim();if(raw==='...'&&(prefix!=='death'||value('isLiving')!=='true'))throw Error('Trzy kropki oznaczają, że osoba żyje. Wybierz status „Żyje”; dla nieznanej daty wpisz ? lub zostaw pole puste.');changed[prefix+'Date']=['','?','...'].includes(raw)?null:raw;changed[prefix+'Year']=value(prefix+'Year')?Number(value(prefix+'Year')):null;changed[prefix+'DateNote']=nullable(value(prefix+'DateNote'));}
@@ -76,6 +85,7 @@ window.GenealogyEditor = (() => {
       }catch(e){showError(e.message);}finally{save.disabled=false;save.textContent='Zapisz';}};
       dialog.scrollTop=0;form.querySelector('input:not([readonly])')?.focus({preventScroll:true});
     };
+    return {refresh,isDirty:()=>editing&&dirty};
   }
   return{mount};
 })();

@@ -47,16 +47,16 @@ class HostedBuildTest(unittest.TestCase):
     def build(self):
         return build_hosted('https://synthetic.web.app', self.output, self.root, self.fetch)
 
-    def test_preserves_data_and_media_with_new_readonly_code(self):
+    def test_preserves_data_and_media_with_family_prototype(self):
         self.assertEqual(self.build(), (1, 1))
         for name, content in self.files.items():
             self.assertEqual((self.output / name).read_bytes(), content)
         html = (self.output / 'index.html').read_text()
-        self.assertNotIn('id="edit-person"', html)
-        self.assertNotIn('web/editor.js', html)
-        self.assertNotIn('web/editor-storage.js', html)
-        self.assertFalse((self.output / 'web/editor.js').exists())
-        self.assertIn('web/viewer-storage.js', html)
+        self.assertIn('data-family-prototype="true"', html)
+        self.assertIn('web/editor.js', html)
+        self.assertIn('web/editor-storage.js', html)
+        self.assertTrue((self.output / 'web/family-users.json').exists())
+        self.assertIn('id="family-login"', html)
         self.assertIn('id="download-pdf"', html)
         self.assertEqual(self.build(), (1, 1))
 

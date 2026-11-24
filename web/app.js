@@ -1,7 +1,10 @@
 (async () => {
   'use strict';
   const seed = await (window.GENEALOGY_READY || Promise.resolve(window.GENEALOGY));
-  const storage = await GenealogyStorage.open(seed);
+  const family=window.GenealogyFamily;
+  let familyUser=family?.enabled?await family.ready():null;
+  let activeStorage=family?.enabled&&!familyUser?{mode:'readonly',state:structuredClone(seed)}:await GenealogyStorage.open(seed,{browserOnly:family?.enabled,account:familyUser?.login});
+  const storage=new Proxy({}, {get:(_,key)=>typeof activeStorage[key]==='function'?activeStorage[key].bind(activeStorage):activeStorage[key]});
   const G = structuredClone(storage.state);
   window.GENEALOGY = G;
   const people = new Map(G.data.people.map(p => [p.id, p]));
@@ -149,13 +152,21 @@
   for(const dialog of [personDialog,photoDialog])dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
   let toastTimer;
   function message(text){clearTimeout(toastTimer);const box=$('export-message');box.textContent=text;box.hidden=false;const status=$('person-status');if(personDialog.open){status.textContent=text;status.hidden=false;}toastTimer=setTimeout(()=>{box.hidden=true;status.hidden=true;},7000);}
-  if(storage.mode==='readonly'){
+  let editor;
+  if(storage.mode==='readonly'&&!family?.enabled){
     $('edit-person')?.remove();
     $('download-changes')?.remove();
     $('download-stale')?.remove();
     $('save-mode').textContent='Wersja tylko do odczytu';
-  }else GenealogyEditor.mount({storage,state:()=>G,selected:()=>state.selected,name:fullName,photo:photoSource,open:openPerson,message,onView:callback=>{onPersonView=callback;},apply:(next,id)=>{
+  }else editor=GenealogyEditor.mount({storage,isFamily:family?.enabled,canEdit:()=>!family?.enabled||!!familyUser,state:()=>G,selected:()=>state.selected,name:fullName,photo:photoSource,open:openPerson,message,onView:callback=>{onPersonView=callback;},apply:(next,id)=>{
     Object.assign(G,structuredClone(next));people.clear();G.data.people.forEach(p=>people.set(p.id,p));cardLayout.refresh();drawTree();focusPerson(id,state.scale);openPerson(id);
+  }});
+  family?.mount({canLeave:()=>!editor?.isDirty(),message,change:async user=>{
+    const nextStorage=user?await GenealogyStorage.open(seed,{browserOnly:true,account:user.login}):{mode:'readonly',state:structuredClone(seed)};
+    activeStorage=nextStorage;familyUser=user;
+    Object.assign(G,structuredClone(nextStorage.state));people.clear();G.data.people.forEach(p=>people.set(p.id,p));
+    cardLayout.refresh();drawTree();editor.refresh();
+    if(personDialog.open&&state.selected)openPerson(state.selected);
   }});
   const search=$('person-search'),results=$('search-results');
   function closeSearch(){results.hidden=true;search.setAttribute('aria-expanded','false');}

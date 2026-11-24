@@ -45,17 +45,18 @@ window.GenealogyStorage = (() => {
     for(const edge of graph.edges){if(edge.style==='invis'||!edge.kind)continue;state.edges.push({kind:edge.kind,paths:(edge._draw_||[]).filter(d=>d.op==='b').map(d=>d.points.map(([x,y])=>[x,height-y])),labels:(edge._ldraw_||[]).filter(d=>d.op==='T').map(d=>({text:d.text,x:d.pt[0],y:height-d.pt[1]})),tail:objects.get(edge.tail).name,head:objects.get(edge.head).name});}
     Object.assign(state,{width,height,ranks,branches:branch,direct:[...direct],generations:max-min+1});
   }
-  async function open(seed) {
+  async function open(seed, options = {}) {
     let token=null;
-    if(location.protocol==='http:'&&['127.0.0.1','localhost'].includes(location.hostname)){
+    if(!options.browserOnly&&location.protocol==='http:'&&['127.0.0.1','localhost'].includes(location.hostname)){
       try{const response=await fetch('api/state',{signal:AbortSignal.timeout(2500),cache:'no-store'});if(response.ok){const result=await response.json();token=result.token;return{mode:'project',state:result.state,photoSource:p=>p.photo,async save(request){const response=await fetch('api/person',{method:'POST',headers:{'Content-Type':'application/json','X-Editor-Token':token},body:JSON.stringify(request)});const result=await response.json();if(!response.ok)throw Error(result.error||'Nie udało się zapisać.');this.state=result.state;return this.state;}};}}catch(error){console.info('Tryb samodzielnego HTML:',error.message);}
     }
-    let db=null,cache=null;const key=location.pathname.replace(/[^/]*$/,'')+seed.data.rootPersonId;
+    let db=null,cache=null;const key=location.pathname.replace(/[^/]*$/,'')+seed.data.rootPersonId+(options.account?':family:'+options.account:'');
     try{db=await database();cache=await get(db,key);}catch(error){console.info(error.message);}
     const stale=cache&&cache.baseHash!==seed.sourceSha256;
     const state=cache&&!stale?cache.state:clone(seed);state.photoData||={};
     return{mode:'browser',state,staleBackup:stale?cache.state:null,async save(request){
       if(!db)throw Error('Pamięć przeglądarki jest niedostępna. Uruchom plik „Uruchom edytor.command”, aby zapisywać w projekcie.');
+      const latest=await get(db,key);if(latest&&latest.baseHash===seed.sourceSha256&&!same(latest.state.data,this.state.data))throw Error('Dane zmieniły się w innym oknie. Odśwież stronę przed zapisaniem.');
       const next=clone(this.state),p=clone(request.person),old=next.data.people.find(p=>p.id===request.person.id);
       if(request.photo){const dataUrl=request.photo.dataUrl;const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'}[dataUrl.split(';')[0].split(':')[1]];if(!ext)throw Error('Wybierz zdjęcie JPG, PNG, WebP lub GIF.');p.photo=`photos/${p.id}_${(await hash(dataUrl)).slice(0,12)}.${ext}`;next.photoData[p.photo]=dataUrl;next.thumbnails[p.id]=await thumbnail(dataUrl);}else if(request.removePhoto){p.photo=null;delete next.thumbnails[p.id];}
       next.data.people=next.data.people.map(other=>{if(other.id===p.id)return p;if(p.siblings.includes(other.id)&&!other.siblings.includes(p.id))other.siblings.push(p.id);if(!p.siblings.includes(other.id))other.siblings=other.siblings.filter(id=>id!==p.id);return other;});

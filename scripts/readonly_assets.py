@@ -6,7 +6,9 @@ import shutil
 
 ASSETS = (
     'web/styles.css', 'web/app.js', 'web/dates.js',
-    'web/card-layout.js', 'web/viewer-storage.js',
+    'web/card-layout.js', 'web/viewer-storage.js', 'web/editor-storage.js',
+    'web/editor.js', 'web/family-auth.js', 'web/family-users.json',
+    'web/vendor/jszip.min.js', 'web/vendor/jszip-LICENSE.md', 'web/vendor/viz-global.js', 'web/vendor/viz-README.md',
     'web/vendor/pdf-lib.min.js', 'web/vendor/pdf-lib-LICENSE.md',
 )
 DATA_FILE = 'web/family-data.js'
@@ -17,14 +19,9 @@ def prepare_viewer(root, site):
     root, site = Path(root), Path(site)
     (site / 'web').mkdir(parents=True, exist_ok=True)
     html = (root / 'index.html').read_text()
-    for asset in ('web/data-loader.js', 'web/editor.js',
-                  'web/vendor/jszip.min.js', 'web/vendor/viz-global.js'):
-        html = html.replace(f'  <script defer src="{asset}"></script>\n', '')
-    html = html.replace('web/editor-storage.js', 'web/viewer-storage.js')
-    html = html.replace('  <script defer src="web/viewer-storage.js">',
-                        '  <script defer src="web/family-data.js"></script>\n'
-                        '  <script defer src="web/viewer-storage.js">')
-    html = html.replace('<button id="edit-person" type="button">Edit</button>', '')
+    html = html.replace('<html lang="pl">', '<html lang="pl" data-family-prototype="true">')
+    html = html.replace('  <script defer src="web/data-loader.js"></script>',
+                        '  <script defer src="web/family-data.js"></script>')
     (site / 'index.html').write_text(html)
     for asset in ASSETS:
         destination = site / asset
