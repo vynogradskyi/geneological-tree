@@ -1,0 +1,23 @@
+/* Keep the ruler outside the transformed graph and reserve its screen space. */
+.viewport { --generation-gutter: 48px; }
+.tree-canvas { position:absolute; inset:0; clip-path:inset(0 0 0 var(--generation-gutter)); }
+.generation-scale {
+  position:absolute; inset:0 auto 0 0; width:var(--generation-gutter);
+  z-index:1; overflow:hidden; pointer-events:none; user-select:none;
+  color:var(--green); background:var(--family-background, #f5f4ee); border-right:1px solid var(--border);
+}
+.generation-heading {
+  position:absolute; inset:0 0 auto; z-index:1; height:28px; line-height:28px;
+  text-align:center; font-size:11px; font-weight:600; background:var(--family-background, #f5f4ee);
+}
+.generation-levels { margin:0; padding:0; list-style:none; }
+.generation-tick {
+  position:absolute; left:0; right:0; height:24px; line-height:24px;
+  transform:translateY(-50%); padding-right:6px; text-align:center;
+  font-size:14px; font-weight:600; font-variant-numeric:tabular-nums;
+}
+.generation-tick::after { content:""; position:absolute; right:0; top:50%; width:7px; border-top:1px solid #889b8b; }
+.generation-tick[hidden] { display:none; }
+.viewport .map-hint { left:calc(var(--generation-gutter) + 12px); max-width:calc(100% - var(--generation-gutter) - 24px); }
+.mobile-view .viewport { --generation-gutter:40px; }
+.mobile-view .generation-scale { bottom:90px; }

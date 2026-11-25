@@ -236,5 +236,8 @@
   "Ojciec osoby {value} · imię nieznane": "Отец {value} · имя неизвестно",
   "Kolory rodziców łączą się w dziecku": "Цвета родителей объединяются у ребёнка",
   "Nieznane pochodzenie": "Неизвестное происхождение",
-  "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Цвета обозначают ветви семьи, а не генетические доли. Неизвестному родителю соответствует нейтральная полоса."
+  "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Цвета обозначают ветви семьи, а не генетические доли. Неизвестному родителю соответствует нейтральная полоса.",
+  "Pokolenia od najstarszego do najmłodszego": "Поколения от старших к младшим",
+  "Pok.": "Пок.",
+  "Pokolenie {number} z {total}": "Поколение {number} из {total}"
 }

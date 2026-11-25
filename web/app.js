@@ -30,6 +30,9 @@
   const pathData = points => `M ${points[0].join(' ')} C ${points.slice(1).map(p => p.join(' ')).join(' ')}`;
   const viewport = $('viewport'), world = $('world'), personDialog = $('person-dialog'), photoDialog = $('photo-dialog');
   const state = {scale:1,x:0,y:0,selected:null};let sheetReturn=null;
+  const generations=GenealogyGenerations.create({element:$('generation-scale'),model:G,t});
+  const viewArea=()=>{const left=$('generation-scale').offsetWidth;return {left,width:Math.max(1,viewport.clientWidth-left),centerX:(viewport.clientWidth+left)/2};};
+  function updateGenerations(){generations.update(state);}
   personDialog.addEventListener('close',()=>{if(sheetReturn){Object.assign(state,sheetReturn);sheetReturn=null;transform();}personButtons.get(state.selected)?.focus({preventScroll:true});});
   const svg = $('connections'), personButtons = new Map();
   let colors=GenealogyColors.create(G.data,G.edges);
@@ -62,6 +65,7 @@
     world.style.width=G.width+'px';world.style.height=G.height+'px';svg.setAttribute('width',G.width);svg.setAttribute('height',G.height);
     for(const[id,node]of Object.entries(G.nodes)){const button=personButtons.get(id);if(button)button.style.left=node.x+'px';}
     paintConnections();
+    updateGenerations();
   }
   function drawTree(){
     colors=GenealogyColors.create(G.data,G.edges);
@@ -86,29 +90,29 @@
   const author=fullName(people.get(G.data.rootPersonId));$('author-name').textContent=author;$('go-root').textContent=people.get(G.data.rootPersonId).firstName||t('Osoba główna');document.title=t('Moje drzewo genealogiczne')+' · '+author;
   $('summary').textContent=I.summary(people.size,G.generations);
   $('updated-on').textContent=G.updatedOn;$('mobile-root-name').textContent=fullName(people.get(G.data.rootPersonId));
-  I.dom();
+  I.dom();generations.refresh();updateGenerations();
   }
   drawTree();
   let activeCard=null;
   const cardLayout=GenealogyCardLayout.create({model:G,onChange:updateLayoutView,onMessage:message,onActiveChange:id=>{if(activeCard)personButtons.get(activeCard)?.classList.remove('is-dragging');activeCard=id;if(id)personButtons.get(id)?.classList.add('is-dragging');viewport.classList.toggle('card-drag-active',!!id);}});
-  function transform(){world.style.transform=`translate(${state.x}px,${state.y}px) scale(${state.scale})`;$('zoom-label').textContent=Math.round(state.scale*100)+'%';}
-  function focusPerson(id, scale=1){const n=G.nodes[id];state.scale=scale;state.x=viewport.clientWidth/2-(n.x+n.w/2)*scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-n.h*scale/2-(responsive.mobile?88:24))-(n.y+n.h/2)*scale;transform();}
-  function zoom(factor,x=viewport.clientWidth/2,y=viewport.clientHeight/2){const old=state.scale;state.scale=Math.max(.12,Math.min(2.5,old*factor));state.x=x-(x-state.x)*state.scale/old;state.y=y-(y-state.y)*state.scale/old;transform();}
+  function transform(){world.style.transform=`translate(${state.x}px,${state.y}px) scale(${state.scale})`;$('zoom-label').textContent=Math.round(state.scale*100)+'%';updateGenerations();}
+  function focusPerson(id, scale=1){const n=G.nodes[id];state.scale=scale;state.x=viewArea().centerX-(n.x+n.w/2)*scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-n.h*scale/2-(responsive.mobile?88:24))-(n.y+n.h/2)*scale;transform();}
+  function zoom(factor,x=viewArea().centerX,y=viewport.clientHeight/2){const old=state.scale;state.scale=Math.max(.01,Math.min(2.5,old*factor));state.x=x-(x-state.x)*state.scale/old;state.y=y-(y-state.y)*state.scale/old;transform();}
   $('zoom-in').onclick=()=>zoom(1.25);$('zoom-out').onclick=()=>zoom(.8);
   function goRoot(){
     if(!responsive.mobile){focusPerson(G.data.rootPersonId,1);return;}
     if(viewport.clientHeight<500){focusPerson(G.data.rootPersonId,.75);return;}
     const p=people.get(G.data.rootPersonId),nodes=[p.id,p.Mommy,p.Daddy].filter(Boolean).map(id=>G.nodes[id]);
     const left=Math.min(...nodes.map(n=>n.x)),right=Math.max(...nodes.map(n=>n.x+n.w)),top=Math.min(...nodes.map(n=>n.y)),bottom=Math.max(...nodes.map(n=>n.y+n.h));
-    const familyScale=Math.min(.9,(viewport.clientWidth-24)/(right-left),(viewport.clientHeight-96)/(bottom-top));
+    const area=viewArea(),familyScale=Math.min(.9,(area.width-24)/(right-left),(viewport.clientHeight-96)/(bottom-top));
     // Expanded ancestor branches can put the parents several screens apart.
     // Keep the root readable; relatives remain accessible through the person sheet.
     if(familyScale<.5){focusPerson(p.id,.75);return;}
     state.scale=familyScale;
-    state.x=(viewport.clientWidth-(right-left)*state.scale)/2-left*state.scale;state.y=(viewport.clientHeight-76-(bottom-top)*state.scale)/2-top*state.scale;transform();
+    state.x=area.left+(area.width-(right-left)*state.scale)/2-left*state.scale;state.y=(viewport.clientHeight-76-(bottom-top)*state.scale)/2-top*state.scale;transform();
   }
   $('go-root').onclick=goRoot;
-  $('fit-tree').onclick=()=>{state.scale=Math.max(.08,Math.min((viewport.clientWidth-50)/G.width,(viewport.clientHeight-70)/G.height));state.x=(viewport.clientWidth-G.width*state.scale)/2;state.y=(viewport.clientHeight-G.height*state.scale)/2+12;transform();};
+  $('fit-tree').onclick=()=>{const area=viewArea(),height=viewport.clientHeight-(responsive.mobile?90:0);state.scale=Math.max(.01,Math.min((area.width-50)/G.width,(height-70)/G.height));state.x=area.left+(area.width-G.width*state.scale)/2;state.y=(height-G.height*state.scale)/2+12;transform();};
   let drag=null,dragWasMoved=false;
   const pointers=new Map();let pinch=null;
   viewport.addEventListener('pointerdown',e=>{
@@ -123,7 +127,7 @@
   viewport.addEventListener('pointermove',e=>{
     if(!pointers.has(e.pointerId))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pinch&&pointers.size===2){const[a,b]=[...pointers.values()];const distance=Math.hypot(a.x-b.x,a.y-b.y),rect=viewport.getBoundingClientRect();state.scale=Math.max(.12,Math.min(2.5,pinch.scale*distance/pinch.distance));state.x=(a.x+b.x)/2-rect.left-pinch.worldX*state.scale;state.y=(a.y+b.y)/2-rect.top-pinch.worldY*state.scale;transform();dragWasMoved=true;return;}
+    if(pinch&&pointers.size===2){const[a,b]=[...pointers.values()];const distance=Math.hypot(a.x-b.x,a.y-b.y),rect=viewport.getBoundingClientRect();state.scale=Math.max(.01,Math.min(2.5,pinch.scale*distance/pinch.distance));state.x=(a.x+b.x)/2-rect.left-pinch.worldX*state.scale;state.y=(a.y+b.y)/2-rect.top-pinch.worldY*state.scale;transform();dragWasMoved=true;return;}
     if(!drag||drag.id!==e.pointerId)return;
     const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
     if(Math.hypot(dx,dy)>6)dragWasMoved=true;
@@ -213,8 +217,10 @@
   search.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();if(e.key==='ArrowDown'){e.preventDefault();results.querySelector('button')?.focus();}if(e.key==='Enter')results.querySelector('button')?.click();});
   document.addEventListener('click',e=>{if(!responsive.mobile&&!e.target.closest('.search-box'))closeSearch();});
   responsive.onChange(()=>{cardLayout.setMobile(responsive.mobile);});
-  let previousViewport={width:viewport.clientWidth,height:viewport.clientHeight};
-  window.addEventListener('resize',()=>{const next={width:viewport.clientWidth,height:viewport.clientHeight};state.x+=(next.width-previousViewport.width)/2;state.y+=(next.height-previousViewport.height)*.72;if(sheetReturn){sheetReturn.x+=(next.width-previousViewport.width)/2;sheetReturn.y+=(next.height-previousViewport.height)*.72;}previousViewport=next;transform();});
+  let previousViewport={centerX:viewArea().centerX,height:viewport.clientHeight};
+  function resizeView(){const next={centerX:viewArea().centerX,height:viewport.clientHeight};const dx=next.centerX-previousViewport.centerX,dy=(next.height-previousViewport.height)*.72;state.x+=dx;state.y+=dy;if(sheetReturn){sheetReturn.x+=dx;sheetReturn.y+=dy;}previousViewport=next;transform();}
+  window.addEventListener('resize',resizeView);
+  if(window.ResizeObserver)new ResizeObserver(resizeView).observe(viewport);
   requestAnimationFrame(goRoot);
 
   async function exportPDF(){

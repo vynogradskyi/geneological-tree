@@ -236,5 +236,8 @@
   "Ojciec osoby {value} · imię nieznane": "Father of {value} · first name unknown",
   "Kolory rodziców łączą się w dziecku": "Parents’ colors blend in their child",
   "Nieznane pochodzenie": "Unknown ancestry",
-  "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Colors show family branches, not genetic proportions. An unknown parent has a neutral stripe."
+  "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Colors show family branches, not genetic proportions. An unknown parent has a neutral stripe.",
+  "Pokolenia od najstarszego do najmłodszego": "Generations from oldest to youngest",
+  "Pok.": "Gen.",
+  "Pokolenie {number} z {total}": "Generation {number} of {total}"
 }
