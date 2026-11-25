@@ -32,12 +32,25 @@
   const state = {scale:1,x:0,y:0,selected:null};let sheetReturn=null;
   personDialog.addEventListener('close',()=>{if(sheetReturn){Object.assign(state,sheetReturn);sheetReturn=null;transform();}personButtons.get(state.selected)?.focus({preventScroll:true});});
   const svg = $('connections'), personButtons = new Map();
+  let colors=GenealogyColors.create(G.data,G.edges);
   function paintConnections(){
     svg.replaceChildren();
+    const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');svg.append(defs);
+    let gradientNumber=0;
   for (const edge of G.edges) {
     for (const points of edge.paths) {
       const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d',pathData(points)); path.setAttribute('class',`connection ${edge.kind}`);svg.append(path);
+      path.setAttribute('d',pathData(points)); path.setAttribute('class',`connection ${edge.kind}`);
+      if(edge.kind==='parent'){
+        const {from,to}=colors.edge(edge),id='family-color-'+gradientNumber++;
+        if(from===to){path.style.stroke=from;svg.append(path);continue;}
+        const gradient=document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
+        gradient.id=id;gradient.setAttribute('gradientUnits','userSpaceOnUse');
+        for(const[key,value]of Object.entries({x1:points[0][0],y1:points[0][1],x2:points.at(-1)[0],y2:points.at(-1)[1]}))gradient.setAttribute(key,value);
+        for(const[offset,color]of GenealogyColors.stops(from,to)){const stop=document.createElementNS('http://www.w3.org/2000/svg','stop');stop.setAttribute('offset',offset);stop.setAttribute('stop-color',color);gradient.append(stop);}
+        defs.append(gradient);path.style.stroke=`url(#${id})`;
+      }
+      svg.append(path);
     }
     for (const label of edge.labels) {
       const text = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -51,6 +64,7 @@
     paintConnections();
   }
   function drawTree(){
+    colors=GenealogyColors.create(G.data,G.edges);
     svg.replaceChildren();$('people').replaceChildren();personButtons.clear();
   world.style.width = G.width+'px'; world.style.height = G.height+'px';
   svg.setAttribute('width',G.width); svg.setAttribute('height',G.height);
@@ -60,6 +74,7 @@
     const pos=G.nodes[p.id],button=document.createElement('button');
     button.type='button';button.className=`person-node branch-${G.branches[p.id]}`;button.dataset.person=p.id;
     Object.assign(button.style,{left:pos.x+'px',top:pos.y+'px',width:pos.w+'px',height:pos.h+'px'});button.classList.toggle('selected',state.selected===p.id);
+    const theme=colors.people[p.id];button.style.setProperty('--branch-color',theme.color);button.style.setProperty('--branch-tint',theme.tint);button.style.setProperty('--branch-band',`linear-gradient(90deg,${theme.bands[0]} 0 50%,${theme.bands[1]} 50% 100%)`);
     button.setAttribute('aria-label',`${shortName(p)}, ${life(p)}. Otwórz szczegóły`);
     const initials=[p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('') || '?';
     const image=G.thumbnails[p.id] ? `<img class="node-photo" src="${G.thumbnails[p.id]}" alt="" draggable="false">` : `<span class="node-photo node-placeholder"><b>${esc(initials)}</b><span>brak zdjęcia</span></span>`;
@@ -205,13 +220,13 @@
       const images=new Map();await Promise.all(Object.entries(G.thumbnails).map(([id,src])=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{images.set(id,image);resolve();};image.onerror=()=>reject(new Error('Nie udało się odczytać portretu.'));image.src=src;})));
       const pad=70,top=160,bottom=100,W=G.width+pad*2,H=G.height+top+bottom;
       const resolution=Math.min(2.25,11500/Math.max(W,H));
-      const canvas=document.createElement('canvas');canvas.width=Math.ceil(W*resolution);canvas.height=Math.ceil(H*resolution);const ctx=canvas.getContext('2d');ctx.scale(resolution,resolution);ctx.fillStyle='#f8faf5';ctx.fillRect(0,0,W,H);
+      const canvas=document.createElement('canvas');canvas.width=Math.ceil(W*resolution);canvas.height=Math.ceil(H*resolution);const ctx=canvas.getContext('2d');ctx.scale(resolution,resolution);ctx.fillStyle=GenealogyColors.palette.background;ctx.fillRect(0,0,W,H);
       ctx.fillStyle='#24422e';ctx.font='42px Georgia';ctx.fillText(t('Moje drzewo genealogiczne'),pad,64);ctx.font='20px Arial';ctx.fillText(t('Autor/Autorka:')+' '+fullName(people.get(G.data.rootPersonId)),pad,99);ctx.font='16px Arial';ctx.fillStyle='#667867';ctx.fillText(I.summary(people.size,G.generations)+' · '+G.updatedOn,pad,129);
       ctx.save();ctx.translate(pad,top);
-      for(const edge of G.edges){ctx.strokeStyle=edge.kind==='marriage'?'#997ca3':edge.kind==='sibling'?'#9b8a62':'#9eaea0';ctx.lineWidth=1.6;ctx.setLineDash(edge.kind==='marriage'?[3,4]:edge.kind==='sibling'?[7,5]:[]);for(const points of edge.paths){ctx.beginPath();ctx.moveTo(...points[0]);for(let i=1;i+2<points.length;i+=3)ctx.bezierCurveTo(...points[i],...points[i+1],...points[i+2]);ctx.stroke();}ctx.setLineDash([]);for(const label of edge.labels){ctx.font='11px Arial';ctx.textAlign='center';ctx.strokeStyle='#f8faf5';ctx.lineWidth=4;ctx.strokeText(t(label.text),label.x,label.y);ctx.fillStyle='#82618e';ctx.fillText(t(label.text),label.x,label.y);}}
+      for(const edge of G.edges){ctx.strokeStyle=edge.kind==='marriage'?'#997ca3':edge.kind==='sibling'?'#9b8a62':'#9eaea0';ctx.lineWidth=1.6;ctx.setLineDash(edge.kind==='marriage'?[3,4]:edge.kind==='sibling'?[7,5]:[]);for(const points of edge.paths){ctx.strokeStyle=GenealogyColors.canvasStroke(ctx,edge,points,colors);ctx.lineWidth=edge.kind==='parent'?2:1.6;ctx.beginPath();ctx.moveTo(...points[0]);for(let i=1;i+2<points.length;i+=3)ctx.bezierCurveTo(...points[i],...points[i+1],...points[i+2]);ctx.stroke();}ctx.setLineDash([]);for(const label of edge.labels){ctx.font='11px Arial';ctx.textAlign='center';ctx.strokeStyle='#f8faf5';ctx.lineWidth=4;ctx.strokeText(t(label.text),label.x,label.y);ctx.fillStyle='#82618e';ctx.fillText(t(label.text),label.x,label.y);}}
       for(const raw of people.values()){
         const p=display(raw);
-        GenealogyCardView.drawPDF(ctx,{node:G.nodes[p.id],branch:G.branches[p.id],root:p.id===G.data.rootPersonId,image:images.get(p.id),
+        GenealogyCardView.drawPDF(ctx,{node:G.nodes[p.id],branch:G.branches[p.id],theme:colors.people[p.id],root:p.id===G.data.rootPersonId,image:images.get(p.id),
           names:[p.firstName||t('Imię nieznane'),p.lastName||p.title||''],
           subtitle:extraLines(p).filter(text=>text!==p.title).slice(0,2).join(' · '),dates:life(p),initials:[p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('')||'?',noPhoto:t('brak zdjęcia')});
       }

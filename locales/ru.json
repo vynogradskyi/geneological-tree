@@ -233,5 +233,8 @@
   "Nie udało się zapisać.": "Не удалось сохранить.",
   "Nie udało się wczytać danych drzewa.": "Не удалось загрузить данные дерева.",
   "Matka osoby {value} · imię nieznane": "Мать {value} · имя неизвестно",
-  "Ojciec osoby {value} · imię nieznane": "Отец {value} · имя неизвестно"
+  "Ojciec osoby {value} · imię nieznane": "Отец {value} · имя неизвестно",
+  "Kolory rodziców łączą się w dziecku": "Цвета родителей объединяются у ребёнка",
+  "Nieznane pochodzenie": "Неизвестное происхождение",
+  "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Цвета обозначают ветви семьи, а не генетические доли. Неизвестному родителю соответствует нейтральная полоса."
 }

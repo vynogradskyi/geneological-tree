@@ -1,0 +1,42 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const context={window:{},structuredClone};vm.createContext(context);
+for(const file of ['branch-colors','card-metrics','card-view'])vm.runInContext(fs.readFileSync(`web/${file}.js`,'utf8'),context);
+const C=context.window.GenealogyColors,P=C.palette;
+const person=(id,Mommy=null,Daddy=null,siblings=[])=>({id,Mommy,Daddy,siblings,photo:'unchanged.png'});
+const data={rootPersonId:'r',people:[person('r','m','d'),person('m','mm','md'),person('d','dm','dd'),person('mm','older-m','older-d',['side']),person('md'),person('dm'),person('dd'),person('older-m'),person('older-d'),person('side',null,null,['mm']),person('outsider'),person('aunt','mm','md'),person('cousin','aunt','outsider')],relationships:[{personIds:['mm','outsider'],status:'rozwiedzeni'}]};
+const before=JSON.stringify(data),edges=[{kind:'parent',tail:'mm',head:'family'},{kind:'parent',tail:'md',head:'family'},{kind:'parent',tail:'family',head:'m'}];
+const model=C.create(data,edges);
+assert.equal(JSON.stringify(data),before);
+assert.equal(model.people.mm.color,P.sage);assert.equal(model.people['older-m'].color,P.sage);assert.equal(model.people['older-d'].color,P.sage);
+assert.equal(model.people.md.color,P.jade);assert.equal(model.people.dm.color,P.blue);assert.equal(model.people.dd.color,P.lilac);
+assert.equal(model.people.m.color,'#588761');assert.equal(model.people.d.color,'#6e72a4');assert.equal(model.people.r.color,'#637e84');
+assert.equal(model.people.aunt.color,model.people.m.color);assert.equal(model.people.side.color,P.sage);assert.equal(model.people.outsider.color,P.neutral);
+assert.equal(model.people.cousin.color,C.mix([model.people.aunt.color,P.neutral]));
+assert.deepEqual(JSON.parse(JSON.stringify(model.people.r.bands)),['#588761','#6e72a4']);
+assert.equal(model.edge(edges[0]).from,P.sage);assert.equal(model.edge(edges[0]).to,model.people.m.color);assert.equal(model.edge(edges[2]).from,model.people.m.color);
+const reversed={...structuredClone(data),people:structuredClone(data.people).reverse()};
+assert.equal(JSON.stringify(C.create(reversed,edges).people),JSON.stringify(model.people));
+const moved=structuredClone(data);for(const [i,p]of moved.people.entries()){p.x=i*1000;p.y=-i*30;p.firstName='Translated '+i;}
+assert.equal(JSON.stringify(C.create(moved,edges).people),JSON.stringify(model.people));
+const noSpouses=structuredClone(data);noSpouses.relationships=[];assert.equal(JSON.stringify(C.create(noSpouses,edges).people),JSON.stringify(model.people));
+const one={rootPersonId:'r',people:[person('r','m'),person('m',null,'g'),person('g')],relationships:[]};
+const single=C.create(one).people;assert.equal(single.g.color,P.jade);assert.equal(single.m.color,P.jade);assert.equal(single.r.color,P.jade);
+assert.deepEqual(JSON.parse(JSON.stringify(single.m.bands)),[P.neutral,P.jade]);assert.deepEqual(JSON.parse(JSON.stringify(single.r.bands)),[P.jade,P.neutral]);
+assert.equal(C.create({rootPersonId:'r',people:[person('r')],relationships:[]}).people.r.color,P.neutral);
+const collapsed=structuredClone(data);collapsed.people.find(p=>p.id==='d').Mommy='mm';const collapsedColors=C.create(collapsed).people;
+assert.equal(collapsedColors.mm.color,C.mix([P.sage,P.blue]));assert.equal(collapsedColors['older-m'].color,collapsedColors.mm.color);
+assert.throws(()=>C.create({rootPersonId:'r',people:[person('r','m'),person('m','r')],relationships:[]}),/cycle/);
+const luminance=hex=>{const rgb=hex.match(/\w\w/g).map(n=>parseInt(n,16)/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
+const contrast=(a,b)=>(Math.max(luminance(a),luminance(b))+.05)/(Math.min(luminance(a),luminance(b))+.05);
+for(const theme of Object.values(model.people)){
+ assert(contrast(P.text,theme.tint)>=7,'Names and dates must remain legible.');assert(contrast(P.muted,theme.tint)>=4.5,'Secondary text contrast.');
+ assert(contrast('#95610f',theme.tint)>=3,'Selection remains visible independently of hue.');
+}
+const calls=[],canvas={createLinearGradient(...coordinates){const stops=[];calls.push({coordinates,stops});return{addColorStop(offset,color){stops.push([offset,color]);}};}};
+const points=[[10,20],[10,40],[30,60],[30,80]];C.canvasStroke(canvas,edges[0],points,model);
+assert.deepEqual(calls[0].coordinates,[10,20,30,80]);assert.equal(calls[0].stops.length,5);assert.equal(calls[0].stops[0][1],P.sage);assert.equal(calls[0].stops.at(-1)[1],model.people.m.color);
+assert.equal(C.canvasStroke(canvas,{kind:'marriage'},points,model),'#997ca3');assert.equal(C.canvasStroke(canvas,{kind:'sibling'},points,model),'#9b8a62');
+const fills=[],photos=[],ctx={setLineDash(){},beginPath(){},roundRect(){},fill(){fills.push(this.fillStyle);},stroke(){},save(){},clip(){},fillRect(){fills.push(this.fillStyle);},restore(){},drawImage(...args){photos.push(args);},fillText(){},measureText(value){return{width:String(value).length*7};}};
+context.window.GenealogyCardView.drawPDF(ctx,{node:{x:0,y:0,w:200,h:312},theme:model.people.r,root:true,image:{width:80,height:160},names:['Synthetic'],subtitle:'',dates:'2000 – ?',initials:'S',noPhoto:'none'});
+assert(fills.includes(model.people.r.tint));for(const color of model.people.r.bands)assert(fills.includes(color));assert.equal(photos[0][3]/photos[0][4],.5);
+console.log('Branch colors: four stable ancestor regions, Oklab mixing, unknown parents, lateral relatives, ex-spouses, shared ancestry, order/position/language invariance, contrast and canvas export verified without a PDF.');

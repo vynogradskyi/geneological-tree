@@ -30,11 +30,13 @@ window.GenealogyCardView = (() => {
     const available=button.clientHeight-22-metrics.photo-8-dates.offsetHeight-(subtitle?.offsetHeight||0);
     for(let size=16;size>=14;size--){names.style.fontSize=size+'px';names.style.lineHeight=(size+3)+'px';if(names.offsetHeight<=available)break;}
   }
-  function drawPDF(ctx,{node:n,branch,root,image,names,subtitle,dates,initials,noPhoto}){
+  function drawPDF(ctx,{node:n,branch,theme,root,image,names,subtitle,dates,initials,noPhoto}){
     const cx=n.x+n.w/2,width=metrics.photo;
-    ctx.setLineDash([]);ctx.fillStyle='#fff';ctx.strokeStyle=root?'#244f3c':'#cdd8cd';ctx.lineWidth=root?2:1;
+    ctx.setLineDash([]);ctx.fillStyle=theme?.tint||'#fff';ctx.strokeStyle=root?'#244f3c':'#cdd8cd';ctx.lineWidth=root?2:1;
     ctx.beginPath();ctx.roundRect(n.x,n.y,n.w,n.h,12);ctx.fill();ctx.stroke();
-    ctx.save();ctx.beginPath();ctx.roundRect(n.x,n.y,n.w,n.h,12);ctx.clip();ctx.fillStyle=root?'#244f3c':branch==='father'?'#537d98':branch==='other'?'#879088':'#5d8463';ctx.fillRect(n.x,n.y,n.w,4);ctx.restore();
+    ctx.save();ctx.beginPath();ctx.roundRect(n.x,n.y,n.w,n.h,12);ctx.clip();
+    if(theme){ctx.fillStyle=theme.bands[0];ctx.fillRect(n.x,n.y,n.w/2,5);ctx.fillStyle=theme.bands[1];ctx.fillRect(n.x+n.w/2,n.y,n.w/2,5);}
+    else {ctx.fillStyle=root?'#244f3c':branch==='father'?'#537d98':branch==='other'?'#879088':'#5d8463';ctx.fillRect(n.x,n.y,n.w,4);}ctx.restore();
     const px=cx-width/2,py=n.y+12;ctx.fillStyle='#f0f2ec';ctx.beginPath();ctx.roundRect(px,py,width,width,6);ctx.fill();
     function font(size,bold=false){ctx.font=`${bold?'bold ':''}${size}px Arial`;}
     function wrap(value,size,bold=false){font(size,bold);const lines=[];let line='';for(const word of String(value||'').split(/\s+/)){if(line&&ctx.measureText(line+' '+word).width>width){lines.push(line);line='';}if(ctx.measureText(word).width>width){for(const c of word){if(ctx.measureText(line+c).width>width){lines.push(line);line='';}line+=c;}}else line=line?line+' '+word:word;}if(line)lines.push(line);return lines;}

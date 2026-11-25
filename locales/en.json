@@ -233,5 +233,8 @@
   "Nie udało się zapisać.": "Unable to save.",
   "Nie udało się wczytać danych drzewa.": "Unable to load tree data.",
   "Matka osoby {value} · imię nieznane": "Mother of {value} · first name unknown",
-  "Ojciec osoby {value} · imię nieznane": "Father of {value} · first name unknown"
+  "Ojciec osoby {value} · imię nieznane": "Father of {value} · first name unknown",
+  "Kolory rodziców łączą się w dziecku": "Parents’ colors blend in their child",
+  "Nieznane pochodzenie": "Unknown ancestry",
+  "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Colors show family branches, not genetic proportions. An unknown parent has a neutral stripe."
 }

@@ -233,5 +233,8 @@
   "Nie udało się zapisać.": "Nie udało się zapisać.",
   "Nie udało się wczytać danych drzewa.": "Nie udało się wczytać danych drzewa.",
   "Matka osoby {value} · imię nieznane": "Matka osoby {value} · imię nieznane",
-  "Ojciec osoby {value} · imię nieznane": "Ojciec osoby {value} · imię nieznane"
+  "Ojciec osoby {value} · imię nieznane": "Ojciec osoby {value} · imię nieznane",
+  "Kolory rodziców łączą się w dziecku": "Kolory rodziców łączą się w dziecku",
+  "Nieznane pochodzenie": "Nieznane pochodzenie",
+  "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek."
 }
