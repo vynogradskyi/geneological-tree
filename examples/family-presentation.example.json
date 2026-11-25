@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "layout": {
+    "adjacentParents": [["mother", "father"]],
+    "before": [["aunt", "mother"]],
+    "rightBranches": [{"person": "uncle", "after": ["mother", "father"]}]
+  },
+  "colors": {"external": "#a46b42"}
+}

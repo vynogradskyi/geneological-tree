@@ -239,5 +239,8 @@
   "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Colors show family branches, not genetic proportions. An unknown parent has a neutral stripe.",
   "Pokolenia od najstarszego do najmłodszego": "Generations from oldest to youngest",
   "Pok.": "Gen.",
-  "Pokolenie {number} z {total}": "Generation {number} of {total}"
+  "Pokolenie {number} z {total}": "Generation {number} of {total}",
+  "Kopia poprzedniego układu": "Previous layout backup",
+  "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.": "Could not download the layout backup. It remains saved in this browser.",
+  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Saved only in this browser. Changes have not been published. Download a ZIP to transfer a copy."
 }

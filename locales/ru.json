@@ -239,5 +239,8 @@
   "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Цвета обозначают ветви семьи, а не генетические доли. Неизвестному родителю соответствует нейтральная полоса.",
   "Pokolenia od najstarszego do najmłodszego": "Поколения от старших к младшим",
   "Pok.": "Пок.",
-  "Pokolenie {number} z {total}": "Поколение {number} из {total}"
+  "Pokolenie {number} z {total}": "Поколение {number} из {total}",
+  "Kopia poprzedniego układu": "Копия прежней расстановки",
+  "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.": "Не удалось скачать копию расстановки. Она сохранена в браузере.",
+  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Сохранено только в этом браузере. Изменения не опубликованы. Скачайте ZIP для переноса копии."
 }

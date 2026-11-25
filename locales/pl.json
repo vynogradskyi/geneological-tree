@@ -239,5 +239,8 @@
   "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.": "Kolory pokazują gałęzie rodziny, nie udziały genetyczne. Nieznany rodzic ma neutralny pasek.",
   "Pokolenia od najstarszego do najmłodszego": "Pokolenia od najstarszego do najmłodszego",
   "Pok.": "Pok.",
-  "Pokolenie {number} z {total}": "Pokolenie {number} z {total}"
+  "Pokolenie {number} z {total}": "Pokolenie {number} z {total}",
+  "Kopia poprzedniego układu": "Kopia poprzedniego układu",
+  "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.": "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.",
+  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię."
 }

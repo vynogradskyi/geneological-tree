@@ -34,8 +34,8 @@ window.GenealogyEditor = (() => {
       exportButton.hidden=!canEdit()||storage.mode==='project';
       document.getElementById('download-stale').hidden=!canEdit()||!storage.staleBackup;I.dom();
     }
-    exportButton.onclick=async()=>{if(!canEdit())return;exportButton.disabled=true;try{await storage.exportChanges();}catch(error){api.message(error.message);}finally{exportButton.disabled=false;}};
-    document.getElementById('download-stale').onclick=()=>{if(canEdit())storage.exportChanges(true);};
+    exportButton.onclick=async()=>{if(!canEdit())return;window.GenealogyResponsive?.closeMenu();exportButton.disabled=true;try{await storage.exportChanges();}catch(error){api.message(error.message);}finally{exportButton.disabled=false;}};
+    document.getElementById('download-stale').onclick=async()=>{if(!canEdit())return;window.GenealogyResponsive?.closeMenu();try{await storage.exportChanges(true);}catch(error){api.message(error.message);}};
     function stop(){if(editing){dialog.classList.toggle('sheet-expanded',wasExpanded);const expand=document.getElementById('toggle-person-size');expand.disabled=false;expand.setAttribute('aria-expanded',String(wasExpanded));expand.textContent=t(wasExpanded?'Zwiń':'Rozwiń');}editing=false;dirty=false;refresh();}
     refresh();
     api.onView(stop);
@@ -86,7 +86,7 @@ window.GenealogyEditor = (() => {
         let translation=null;
         if(language!=='pl'){const values=Object.fromEntries(I.fields.filter(key=>JSON.stringify(changed[key]??null)!==JSON.stringify(p[key]??null)).map(key=>[key,structuredClone(changed[key]??null)]));if(Object.keys(values).length)translation={language,source:Object.fromEntries(I.fields.map(key=>[key,basePerson[key]??null])),values};for(const key of I.fields){if(Object.hasOwn(basePerson,key))changed[key]=structuredClone(basePerson[key]);else delete changed[key];}}
         validate(changed,data,marriages);save.disabled=true;save.textContent=t('Zapisywanie…');
-        const next=await storage.save({person:changed,basePerson,baseMarriages,marriages,photo:upload,removePhoto,translation,baseTranslation});stop();api.apply(next,p.id);api.message(storage.mode==='project'?'Zapisano dane i zdjęcie w folderze projektu.':'Zapisano w tej przeglądarce. „Pobierz zmiany” zapisze kopię do przeniesienia.');
+        const next=await storage.save({person:changed,basePerson,baseMarriages,marriages,photo:upload,removePhoto,translation,baseTranslation});stop();api.apply(next,p.id);api.message(storage.mode==='project'?'Zapisano dane i zdjęcie w folderze projektu.':'Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.');
       }catch(e){showError(e.message);}finally{save.disabled=false;save.textContent=t('Zapisz');}};
       if(language!=='pl'){const help=document.createElement('p');help.className='issue';help.textContent=t('Edytujesz tłumaczenie. Daty, zdjęcia i powiązania są wspólne dla wszystkich języków.');form.prepend(help);}
       const storageNote=document.createElement('p');storageNote.className='edit-storage-note';storageNote.textContent=storage.mode==='project'?t('Zmiany i zdjęcia zapiszą się w folderze projektu.'):t('Zmiany i zdjęcia zapiszą się tylko w tej przeglądarce. Nie zostaną opublikowane automatycznie.');form.querySelector('.edit-help').after(storageNote);

@@ -111,6 +111,30 @@ class HostedBuildTest(unittest.TestCase):
             build_hosted('https://synthetic.web.app', self.root / 'web', self.root, self.fetch)
 
 
+class PresentationPreferencesTest(unittest.TestCase):
+    def test_private_preferences_validate_without_changing_family_facts(self):
+        from presentation import load_presentation
+        with tempfile.TemporaryDirectory(dir=ROOT / 'tmp') as directory:
+            root = Path(directory)
+            data = {'people': [{'id': 'mother', 'Mommy': None, 'Daddy': None},
+                               {'id': 'father', 'Mommy': None, 'Daddy': None}]}
+            before = copy.deepcopy(data)
+            self.assertEqual(load_presentation(root, data), {})
+            path = root / 'family-presentation.json'
+            settings = {'version': 1, 'layout': {'adjacentParents': [['mother', 'father']]},
+                        'colors': {'father': '#a46b42'}}
+            path.write_text(json.dumps(settings))
+            self.assertEqual(load_presentation(root, data), settings)
+            self.assertEqual(data, before)
+            for invalid in [dict(settings, colors={'missing': '#a46b42'}),
+                            dict(settings, colors={'father': 'red<script>'}),
+                            dict(settings, layout={'before': [['mother', 'missing']]}),
+                            dict(settings, arbitraryFacts=True)]:
+                path.write_text(json.dumps(invalid))
+                with self.assertRaises(ValueError):
+                    load_presentation(root, data)
+
+
 if __name__ == '__main__':
     (ROOT / 'tmp').mkdir(exist_ok=True)
     unittest.main()

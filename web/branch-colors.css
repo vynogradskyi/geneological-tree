@@ -1,6 +1,9 @@
 /* Family colors supplement positions, relationship labels and line patterns. */
 :root{--branch-sage:#73884e;--branch-jade:#338572;--branch-blue:#4979aa;--branch-lilac:#8b6a9e;--branch-neutral:#879088;--family-surface:#fffefb;--family-background:#f5f4ee;color:#263a32;background:var(--family-background);--muted:#59685e}
 .viewport{background-color:var(--family-background)}
+.family-fields{position:absolute;pointer-events:none;user-select:none;z-index:0}
+#connections{z-index:1}
+#people{z-index:2}
 .person-node,.person-node:hover{color:#263a32;background:var(--branch-tint,var(--family-surface))}
 .person-node::before,.person-node.branch-root::before,.person-node.branch-father::before,.person-node.branch-other::before{height:5px;background:var(--branch-band,var(--branch-neutral))}
 .person-node .node-subtitle{color:#59685e}

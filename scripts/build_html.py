@@ -10,12 +10,14 @@ import os
 from PIL import Image, ImageOps
 from genealogy_layout import create_layout
 from tree_json import load_translations, write_json_payload, language_payloads, translation_digest
+from presentation import load_presentation
 
 def build_payload(root=None, data=None, review=None):
     ROOT = Path(root or Path(__file__).resolve().parents[1])
     data = data if data is not None else json.loads((ROOT / 'family-tree.json').read_text())
     review = review if review is not None else json.loads((ROOT / 'family-tree-review.json').read_text())
-    layout=create_layout(data)
+    presentation=load_presentation(ROOT, data)
+    layout=create_layout(data, presentation=presentation)
     thumbnails = {}
     for p in data['people']:
         if not p['photo']:
@@ -46,7 +48,7 @@ def build_payload(root=None, data=None, review=None):
     payload = {
         'translations': translations,
         'translationSha256': translation_digest(translations),
-        'data': data, **layout, 'thumbnails': thumbnails,
+        'data': data, **layout, 'thumbnails': thumbnails, 'presentation': presentation,
         'isExample': review.get('isExample', False),
         'disconnectedPeople': sorted(set(adjacency) - connected),
         'issues': [q for q in review['issues'] if q['status'] == 'otwarte'],

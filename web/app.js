@@ -9,7 +9,7 @@
   let activeStorage=family?.enabled&&!familyUser?{mode:'readonly',state:structuredClone(seed)}:await GenealogyStorage.open(seed,{browserOnly:family?.enabled,account:familyUser?.login});
   const storage=new Proxy({}, {get:(_,key)=>typeof activeStorage[key]==='function'?activeStorage[key].bind(activeStorage):activeStorage[key]});
   const G = structuredClone(storage.state);
-  Object.assign(G,GenealogyFamilyLayout.create(G.data));GenealogyCardView.normalize(G);
+  Object.assign(G,GenealogyFamilyLayout.create(G.data,G.presentation));GenealogyCardView.normalize(G);
   window.GENEALOGY = G;
   const metrics=window.GenealogyCardMetrics;
   document.documentElement.style.setProperty('--card-width',metrics.width+'px');
@@ -35,8 +35,10 @@
   function updateGenerations(){generations.update(state);}
   personDialog.addEventListener('close',()=>{if(sheetReturn){Object.assign(state,sheetReturn);sheetReturn=null;transform();}personButtons.get(state.selected)?.focus({preventScroll:true});});
   const svg = $('connections'), personButtons = new Map();
-  let colors=GenealogyColors.create(G.data,G.edges);
+  let colors=GenealogyColors.create(G.data,G.edges,G.presentation);
+  const fields=GenealogyFields.create($('family-fields'));
   function paintConnections(){
+    fields.update(G,colors);
     svg.replaceChildren();
     const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');svg.append(defs);
     let gradientNumber=0;
@@ -68,7 +70,7 @@
     updateGenerations();
   }
   function drawTree(){
-    colors=GenealogyColors.create(G.data,G.edges);
+    colors=GenealogyColors.create(G.data,G.edges,G.presentation);
     svg.replaceChildren();$('people').replaceChildren();personButtons.clear();
   world.style.width = G.width+'px'; world.style.height = G.height+'px';
   svg.setAttribute('width',G.width); svg.setAttribute('height',G.height);
@@ -195,12 +197,12 @@
     $('download-stale')?.remove();
     $('save-mode').textContent='Wersja tylko do odczytu';
   }else editor=GenealogyEditor.mount({storage,isFamily:family?.enabled,canEdit:()=>!family?.enabled||!!familyUser,display,language:()=>I.language,state:()=>G,selected:()=>state.selected,name:fullName,photo:photoSource,open:openPerson,message,onView:callback=>{onPersonView=callback;},apply:(next,id)=>{
-    Object.assign(G,structuredClone(next));Object.assign(G,GenealogyFamilyLayout.create(G.data));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));cardLayout.refresh();drawTree();focusPerson(id,state.scale);openPerson(id);
+    Object.assign(G,structuredClone(next));Object.assign(G,GenealogyFamilyLayout.create(G.data,G.presentation));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));cardLayout.refresh();drawTree();focusPerson(id,state.scale);openPerson(id);
   }});
   family?.mount({canLeave:()=>!editor?.isDirty(),message,change:async user=>{
     const nextStorage=user?await GenealogyStorage.open(seed,{browserOnly:true,account:user.login}):{mode:'readonly',state:structuredClone(seed)};
     activeStorage=nextStorage;familyUser=user;
-    for(const key of Object.keys(G))delete G[key];Object.assign(G,structuredClone(nextStorage.state));Object.assign(G,GenealogyFamilyLayout.create(G.data));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));
+    for(const key of Object.keys(G))delete G[key];Object.assign(G,structuredClone(nextStorage.state));Object.assign(G,GenealogyFamilyLayout.create(G.data,G.presentation));GenealogyCardView.normalize(G);people.clear();G.data.people.forEach(p=>people.set(p.id,p));
     cardLayout.refresh();drawTree();editor.refresh();
     if(personDialog.open&&state.selected)openPerson(state.selected);I.dom();
   }});

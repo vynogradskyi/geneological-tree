@@ -17,7 +17,7 @@ window.GenealogyCardLayout = (() => {
   }
   const routeEdges=(nodes,edges)=>window.GenealogyRouting.routeEdges(nodes,edges);
   function constrained(nodes,policy,active,x){
-    const ids=policy.pairs.find(pair=>pair.includes(active))||[active],positions=Object.fromEntries(Object.entries(nodes).map(([id,n])=>[id,n.x]));
+    const ids=(policy.groups||policy.pairs).find(pair=>pair.includes(active))||[active],positions=Object.fromEntries(Object.entries(nodes).map(([id,n])=>[id,n.x]));
     let minimum=-Infinity,maximum=Infinity;
     for(const id of ids){const node=nodes[id],area=policy.areas[policy.personAreas[id]];minimum=Math.max(minimum,area.left-node.x);maximum=Math.min(maximum,area.right-node.w-node.x);}
     const row=Object.values(policy.rowOrder).find(row=>row.includes(active))||[],outsiders=row.filter(id=>!ids.includes(id)),left=Math.min(...ids.map(id=>nodes[id].x)),right=Math.max(...ids.map(id=>nodes[id].x+nodes[id].w));
@@ -30,11 +30,12 @@ window.GenealogyCardLayout = (() => {
   function create({model,onChange,onMessage=()=>{},onActiveChange=()=>{}}){
     const key='genealogy-card-layout-v1:'+location.pathname.replace(/[^/]*$/,'')+model.data.rootPersonId;
     let base={nodes:clone(model.nodes),edges:clone(model.edges),width:model.width,height:model.height};
-    let signature=fingerprint(model),undo=[],redo=[],active=null,enabled=!matchMedia('(pointer:coarse), (max-width:760px), (max-width:1000px) and (max-height:500px)').matches,cache=null,previous=null,canPersist=true,desktopEnabled=true;
-    const previousKey=key+':previous';
+    let signature=fingerprint(model),undo=[],redo=[],active=null,enabled=false,cache=null,previous=null,canPersist=true,desktopEnabled=false;
+    const previousKey=key+':previous',historyKey=previousKey+':history';let history=[];
     const toggle=document.getElementById('toggle-card-drag'),undoButton=document.getElementById('undo-layout'),redoButton=document.getElementById('redo-layout'),resetButton=document.getElementById('reset-layout');
     try{cache=JSON.parse(localStorage.getItem(key));previous=JSON.parse(localStorage.getItem(previousKey));if(typeof cache?.enabled==='boolean'&&!matchMedia('(pointer:coarse), (max-width:760px), (max-width:1000px) and (max-height:500px)').matches)enabled=cache.enabled;}catch{}
-    desktopEnabled=cache?.enabled??true;
+    try{const saved=JSON.parse(localStorage.getItem(historyKey));if(Array.isArray(saved))history=saved;}catch{}
+    desktopEnabled=cache?.enabled??false;
     const basePositions=()=>Object.fromEntries(Object.entries(base.nodes).map(([id,node])=>[id,node.x]));
     function valid(saved){
       if(!saved||Object.keys(saved).length!==Object.keys(base.nodes).length)return false;
@@ -44,18 +45,18 @@ window.GenealogyCardLayout = (() => {
       if(model.layoutPolicy){
         for(const[id,x]of Object.entries(saved)){const area=model.layoutPolicy.areas[model.layoutPolicy.personAreas[id]];if(x<area.left-1||x+base.nodes[id].w>area.right+1)return false;}
         for(const ids of Object.values(model.layoutPolicy.rowOrder))for(let i=1;i<ids.length;i++)if(saved[ids[i]]<saved[ids[i-1]]+base.nodes[ids[i-1]].w+GAP-1)return false;
-        for(const pair of model.layoutPolicy.pairs)if(Math.abs((saved[pair[0]]-base.nodes[pair[0]].x)-(saved[pair[1]]-base.nodes[pair[1]].x))>1)return false;
+        for(const pair of model.layoutPolicy.groups||model.layoutPolicy.pairs)if(Math.abs((saved[pair[0]]-base.nodes[pair[0]].x)-(saved[pair[1]]-base.nodes[pair[1]].x))>1)return false;
       }
       return true;
     }
-    function archive(value){if(!value)return;previous=value;try{localStorage.setItem(previousKey,JSON.stringify(value));}catch{canPersist=false;onMessage('Nie udało się zachować wcześniejszego układu. Pobierz kopię przed zmianami.');}}
+    function archive(value){if(!value)return;if(previous&&!same(previous,value)&&!history.some(saved=>same(saved,previous)))history.push(clone(previous));previous=value;try{if(history.length)localStorage.setItem(historyKey,JSON.stringify(history));localStorage.setItem(previousKey,JSON.stringify(value));}catch{canPersist=false;onMessage('Nie udało się zachować wcześniejszego układu. Pobierz kopię przed zmianami.');}}
     function controls(){
       toggle.setAttribute('aria-pressed',String(enabled));toggle.textContent=enabled?'Przesuwanie kart: włączone':'Przesuwanie kart: wyłączone';
       document.getElementById('viewport').classList.toggle('cards-draggable',enabled);
       undoButton.disabled=!undo.length||!!active;redoButton.disabled=!redo.length||!!active;resetButton.disabled=same(positions(model),basePositions())||!!active;
       document.getElementById('layout-hint').textContent=enabled?'Przesuwaj w obrębie rodziny. Aktualni małżonkowie przesuwają się razem.':'Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.';
       document.getElementById('layout-backup-notice').hidden=!previous;
-      document.getElementById('mobile-layout-exit').hidden=!enabled||!window.GenealogyResponsive?.mobile;
+      document.getElementById('mobile-layout-exit').hidden=!enabled;
       document.body.classList.toggle('mobile-arranging',enabled&&window.GenealogyResponsive?.mobile);window.GenealogyI18n?.dom();
     }
     function persist(){if(!canPersist)return;try{localStorage.setItem(key,JSON.stringify({version:2,signature,positions:positions(model),enabled}));}catch{onMessage('Układ działa, ale przeglądarka nie mogła go zapisać na później.');}}
@@ -92,7 +93,7 @@ window.GenealogyCardLayout = (() => {
     let latest=cache?.signature===signature&&valid(cache.positions)?cache.positions:migrated&&valid(migrated)?migrated:null;
     function positionsFromCache(){return latest;}
     const change=onChange;onChange=()=>{latest=positions(model);change();};
-    document.getElementById('download-layout-backup').onclick=()=>{if(!previous)return;const url=URL.createObjectURL(new Blob([JSON.stringify(previous,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='family-layout-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+    document.getElementById('download-layout-backup').onclick=()=>{if(!previous)return;window.GenealogyResponsive?.closeMenu?.();try{const backup=history.length?{version:1,latest:previous,history}:previous;const url=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=history.length?'family-layout-backups.json':'family-layout-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{onMessage('Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.');}};
     document.getElementById('mobile-layout-exit').onclick=()=>api.toggle();
     toggle.onclick=()=>api.toggle();undoButton.onclick=()=>api.undo();redoButton.onclick=()=>api.redo();resetButton.onclick=()=>api.reset();
     document.addEventListener('keydown',event=>{

@@ -1,33 +1,42 @@
 /* Deterministic family areas. No names, real-person IDs or inferred marriage status. */
 window.GenealogyFamilyLayout = (() => {
-  const VERSION=3;
+  const VERSION=4;
   // x(child) = mean(x(parents)) for singleton families. Orthogonal projection
   // keeps these equations exact while Hildreth's dual updates enforce row gaps.
   // This minimizes squared horizontal positions for the selected family order.
-  function alignChildren(layout, people, width, gap, padding) {
+  function alignChildren(layout, people, width, gap, padding, preferences) {
     const ids = Object.keys(layout.nodes).sort();
     const index = new Map(ids.map((id, i) => [id, i]));
     const count = ids.length;
     const vector = () => Array(count).fill(0);
     const dot = (a, b) => a.reduce((sum, value, i) => sum + value * b[i], 0);
-    const basis = [], families = new Map();
+    const basis = [], targets = [], families = new Map();
     for (const person of people.values()) if (person.Mommy || person.Daddy) {
       const key = JSON.stringify([person.Mommy, person.Daddy]);
       if (!families.has(key)) families.set(key, []);
       families.get(key).push(person);
     }
-    for (const children of families.values()) if (children.length === 1) {
-      const child = children[0], parents = [child.Mommy, child.Daddy].filter(Boolean);
-      const normal = vector();
-      normal[index.get(child.id)] = 1;
-      for (const parent of parents) normal[index.get(parent)] -= 1 / parents.length;
+    function equation(normal, target = 0) {
       // Reorthogonalization avoids drift in long, uneven ancestor chains.
-      for (let pass = 0; pass < 2; pass++) for (const axis of basis) {
+      for (let pass = 0; pass < 2; pass++) for (const [j, axis] of basis.entries()) {
         const amount = dot(normal, axis);
         for (let i = 0; i < count; i++) normal[i] -= amount * axis[i];
+        target -= amount * targets[j];
       }
       const length = Math.sqrt(dot(normal, normal));
-      if (length > 1e-9) basis.push(normal.map(value => value / length));
+      if (length > 1e-9) { basis.push(normal.map(value => value / length)); targets.push(target / length); }
+      else if (Math.abs(target) > 1e-5) throw Error('Sprzeczne ustawienia sąsiedztwa rodzin.');
+    }
+    for (const children of families.values()) if (children.length === 1) {
+      const child = children[0], parents = [child.Mommy, child.Daddy].filter(Boolean), normal = vector();
+      normal[index.get(child.id)] = 1;
+      for (const parent of parents) normal[index.get(parent)] -= 1 / parents.length;
+      equation(normal);
+    }
+    const policy = layout.layoutPolicy;
+    for (const [left, right] of preferences.adjacentParents || []) {
+      const normal = vector(); normal[index.get(right)] = 1; normal[index.get(left)] = -1;
+      equation(normal, width + gap);
     }
     function project(input) {
       const result = input.slice();
@@ -37,10 +46,23 @@ window.GenealogyFamilyLayout = (() => {
       }
       return result;
     }
-    const coordinates = project(ids.map(id => layout.nodes[id].x));
-    const policy = layout.layoutPolicy;
-    const units = new Map(ids.map(id => [id, policy.pairs.find(pair => pair.includes(id)) || [id]]));
+    const origin = vector();
+    for (const [j, axis] of basis.entries()) for (let i = 0; i < count; i++) origin[i] += targets[j] * axis[i];
+    const coordinates = project(ids.map(id => layout.nodes[id].x)).map((x, i) => x + origin[i]);
+    const units = new Map(ids.map(id => [id, policy.groups.find(pair => pair.includes(id)) || [id]]));
     const trunks = new Map(ids.map(id => [id, policy.areas[policy.personAreas[id]].path.match(/^root([01]*)/)[1]]));
+    function descendants(starts) {
+      const found = new Set(starts); let changed = true;
+      while (changed) { changed = false; for (const p of people.values()) if (!found.has(p.id) && (found.has(p.Mommy) || found.has(p.Daddy))) { found.add(p.id); changed = true; } }
+      return found;
+    }
+    const outerBranches = (preferences.rightBranches || []).map(({person, after}) => {
+      const branch = descendants([person]), family = descendants(after);
+      const left = trunks.get(after[0]), right = trunks.get(after[1]); let shared = 0;
+      while (shared < Math.min(left.length, right.length) && left[shared] === right[shared]) shared++;
+      for (const id of branch) trunks.set(id, left.slice(0, shared) + '1');
+      return {person, branch, family};
+    });
     function branchBefore(a, b) {
       const left = trunks.get(a), right = trunks.get(b);
       let i = 0;
@@ -49,13 +71,14 @@ window.GenealogyFamilyLayout = (() => {
     }
     function mustPrecede(a, b) {
       return a.some(id => b.some(other => branchBefore(id, other))) ||
-        [...people.values()].some(person => a.includes(person.Mommy) && b.includes(person.Daddy));
+        [...people.values()].some(person => a.includes(person.Mommy) && b.includes(person.Daddy)) ||
+        (preferences.before || []).some(([left, right]) => a.includes(left) && b.includes(right)) ||
+        outerBranches.some(({branch, family}) => a.some(id => family.has(id)) && b.some(id => branch.has(id)));
     }
     function blocks(row) {
       const pending = new Set(row), result = [];
       for (const id of row) if (pending.has(id)) {
         const members = units.get(id).filter(other => pending.has(other));
-        members.sort((a, b) => row.indexOf(a) - row.indexOf(b));
         for (const member of members) pending.delete(member);
         result.push(members);
       }
@@ -88,7 +111,12 @@ window.GenealogyFamilyLayout = (() => {
         const normal = project(difference);
         clauses.push({a, b, normal, norm: dot(normal, normal), lambda: 0});
       }
-      coordinates.fill(0);
+      for (const {person, branch, family} of outerBranches) for (const relative of family) if (!branch.has(relative)) {
+        const a = index.get(relative), b = index.get(person), difference = vector(); difference[b] = 1; difference[a] = -1;
+        const normal = project(difference);
+        clauses.push({a, b, normal, norm:dot(normal, normal), lambda:0, fixed:true});
+      }
+      for (let i = 0; i < count; i++) coordinates[i] = origin[i];
       for (let iteration = 0; iteration < 5000; iteration++) {
         let step = 0;
         for (const clause of clauses) {
@@ -104,9 +132,9 @@ window.GenealogyFamilyLayout = (() => {
         if (maxViolation < 1e-7 && step < 1e-7) break;
       }
       if (maxViolation < 1e-5) break;
-      const movable = clauses.filter(({a, b}) => {
+      const movable = clauses.filter(({a, b, fixed}) => {
         const left = units.get(ids[a]), right = units.get(ids[b]);
-        return !left.some(id => right.includes(id)) && !mustPrecede(left, right);
+        return !fixed && !left.some(id => right.includes(id)) && !mustPrecede(left, right);
       }).sort((a, b) => b.lambda - a.lambda);
       let exchanged = false;
       for (const clause of movable) {
@@ -137,9 +165,14 @@ window.GenealogyFamilyLayout = (() => {
     }
     layout.width = Math.max(...coordinates) + offset + width + padding;
   }
-  function create(data){
+  function create(data, presentation={}){
     const {width:W,height:H,gap:GAP}=window.GenealogyCardMetrics,LEVEL=H+108,PAD=64;
     const P=new Map(data.people.map(p=>[p.id,p]));
+    const raw=presentation?.layout||{}, preferences={};
+    const validPair=pair=>Array.isArray(pair)&&pair.length===2&&pair[0]!==pair[1]&&pair.every(id=>P.has(id));
+    preferences.adjacentParents=(raw.adjacentParents||[]).filter(validPair);
+    preferences.before=(raw.before||[]).filter(validPair);
+    preferences.rightBranches=(raw.rightBranches||[]).filter(item=>P.has(item.person)&&validPair(item.after));
     if(P.size!==data.people.length||!P.has(data.rootPersonId))throw Error('Nieprawidłowe identyfikatory osób.');
     const links=new Map([...P.keys()].map(id=>[id,new Map()])),siblings=new Map([...P.keys()].map(id=>[id,new Set()])),children=new Map([...P.keys()].map(id=>[id,[]]));
     const relations=new Map(),current=new Map([...P.keys()].map(id=>[id,[]]));
@@ -216,8 +249,19 @@ window.GenealogyFamilyLayout = (() => {
     for(const r of data.relationships)edges.push({kind:'marriage',tail:r.personIds[0],head:r.personIds[1],relationshipId:r.id,status:r.status,paths:[],labels:[{text:r.status==='rozwiedzeni'?'rozwód':r.previousRelationshipId?'późniejsze małżeństwo':'małżeństwo',x:0,y:0}]});
     const rowOrder={};for(const[id,rank]of Object.entries(ranks)){rowOrder[rank]||=[];rowOrder[rank].push(id);}for(const ids of Object.values(rowOrder))ids.sort((a,b)=>nodes[a].x-nodes[b].x);
     const pairs=data.relationships.filter(r=>r.status==='trwa').map(r=>r.personIds);
-    const result={nodes,edges,ranks,branches,direct:[...direct].sort(),generations:max-min+1,width:tree.width+2*PAD,height:(max-min)*LEVEL+H+2*PAD,disconnectedPeople:[...P.keys()].filter(id=>!connected.has(id)),layoutPolicy:{version:VERSION,areas,personAreas,rowOrder,pairs},layoutWarnings:[...new Set(warnings)]};
-    alignChildren(result,P,W,GAP,PAD);
+    const groups=pairs.map(pair=>pair.slice().sort((a,b)=>nodes[a].x-nodes[b].x));
+    const accepted=[];
+    for(const pair of preferences.adjacentParents){
+      const rolesMatch=ranks[pair[0]]===ranks[pair[1]]&&data.people.some(p=>p.Mommy===pair[0]&&p.Daddy===pair[1]);
+      const conflicts=data.relationships.some(r=>r.personIds.some(id=>pair.includes(id))&&(r.status==='trwa'&&!r.personIds.every(id=>pair.includes(id))||r.personIds.every(id=>pair.includes(id))&&['rozwiedzeni','zakończone'].includes(r.status)));
+      // A newer browser edit to family facts outranks an old display preference.
+      if(!rolesMatch||conflicts){warnings.push('stale-display-adjacency');continue;}
+      if(!groups.some(group=>pair.every(id=>group.includes(id)))){if(groups.some(group=>group.some(id=>pair.includes(id))))throw Error('Sprzeczne grupy rodzinne.');groups.push(pair.slice());}
+      accepted.push(pair);
+    }
+    preferences.adjacentParents=accepted;
+    const result={nodes,edges,ranks,branches,direct:[...direct].sort(),generations:max-min+1,width:tree.width+2*PAD,height:(max-min)*LEVEL+H+2*PAD,disconnectedPeople:[...P.keys()].filter(id=>!connected.has(id)),layoutPolicy:{version:VERSION,areas,personAreas,rowOrder,pairs,groups},layoutWarnings:[...new Set(warnings)]};
+    alignChildren(result,P,W,GAP,PAD,preferences);
     result.edges=window.GenealogyRouting.routeEdges(nodes,edges);
     return result;
   }

@@ -28,7 +28,7 @@ window.GenealogyColors = (() => {
     const a=lab(from),b=lab(to);
     return [0,.25,.5,.75,1].map(offset=>[offset,offset===0?from:offset===1?to:fromLab(a.map((value,i)=>value*(1-offset)+b[i]*offset))]);
   }
-  function create(data,edges=[]){
+  function create(data,edges=[],presentation={}){
     const people=new Map(data.people.map(p=>[p.id,p])),root=people.get(data.rootPersonId);
     if(!root)throw Error('Missing root for branch colors.');
     const seeds=new Map(),regional=new Map(),siblings=new Map([...people.keys()].map(id=>[id,new Set()]));
@@ -60,7 +60,8 @@ window.GenealogyColors = (() => {
       if(nodes[id])return nodes[id];if(active.has(id))throw Error('Ancestry cycle in branch colors.');
       active.add(id);const p=people.get(id);
       const parents=[p.Mommy,p.Daddy].map(parent=>people.has(parent)?visit(parent):null);
-      const known=parents.filter(Boolean),color=known.length?mix(known.map(parent=>parent.color)):fallback(id);
+      const known=parents.filter(Boolean),override=presentation?.colors?.[id];
+      const color=!known.length&&/^#[0-9a-f]{6}$/i.test(override||'')?override.toLowerCase():known.length?mix(known.map(parent=>parent.color)):fallback(id);
       nodes[id]={color,tint:tint(color),bands:known.length?parents.map(parent=>parent?.color||palette.neutral):[color,color]};
       active.delete(id);return nodes[id];
     }

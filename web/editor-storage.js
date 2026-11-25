@@ -28,7 +28,7 @@ window.GenealogyStorage = (() => {
     if(image.naturalWidth*image.naturalHeight>65000000)throw Error('Zdjęcie jest zbyt duże; wybierz wersję do 65 megapikseli.');
     const s=Math.min(1,360/image.naturalWidth,480/image.naturalHeight),canvas=document.createElement('canvas');canvas.width=Math.round(image.naturalWidth*s);canvas.height=Math.round(image.naturalHeight*s);canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.87);
   }
-  async function relayout(state){Object.assign(state,GenealogyFamilyLayout.create(state.data));}
+  async function relayout(state){Object.assign(state,GenealogyFamilyLayout.create(state.data,state.presentation));}
   async function open(seed, options = {}) {
     let token=null;
     if(!options.browserOnly&&location.protocol==='http:'&&['127.0.0.1','localhost'].includes(location.hostname)){
@@ -42,6 +42,8 @@ window.GenealogyStorage = (() => {
     const backup=stale?cache:backupKey&&db?await get(db,backupKey):null;
     let expectedToken=cache?.writeToken||cache?.savedAt||null;
     const state=cache&&!stale?cache.state:clone(seed);state.photoData||={};
+    // Display preferences can change without invalidating the user's family draft.
+    state.presentation=clone(seed.presentation||{});
     return{mode:'browser',state,staleBackup:backup?.state||null,async save(request){
       if(!db)throw Error('Pamięć przeglądarki jest niedostępna. Uruchom plik „Uruchom edytor.command”, aby zapisywać w projekcie.');
       const next=clone(this.state),p=clone(request.person),old=next.data.people.find(p=>p.id===request.person.id);
@@ -51,7 +53,7 @@ window.GenealogyStorage = (() => {
       if(!same([old.Mommy,old.Daddy,old.siblings,oldMarriages],[p.Mommy,p.Daddy,p.siblings,request.marriages]))await relayout(next);
       if(request.translation){next.translations||={};const entry=request.translation;next.translations[entry.language]||={language:entry.language,people:{},issues:{}};const previous=next.translations[entry.language].people[p.id]||{source:{},values:{}};for(const field of Object.keys(entry.values)){previous.source[field]=clone(entry.source[field]);previous.values[field]=clone(entry.values[field]);}next.translations[entry.language].people[p.id]=previous;}
       next.updatedOn=today();next.sourceSha256=await hash(JSON.stringify(next.data,null,2)+'\n');const writeToken=crypto.randomUUID();await commit(db,key,expectedToken,{baseHash,state:next,savedAt:new Date().toISOString(),writeToken,backupKey},stale?{key:backupKey,record:cache}:null);expectedToken=writeToken;stale=false;this.state=next;return next;
-    },async exportChanges(useStale=false){const value=useStale?this.staleBackup:this.state,zip=new JSZip();zip.file('family-tree.json',JSON.stringify(value.data,null,2)+'\n');zip.file('family-translations.json',JSON.stringify(value.translations||{},null,2)+'\n');for(const[path,url]of Object.entries(value.photoData||{}))zip.file(path,url.split(',')[1],{base64:true});const portable=clone(value);delete portable.photoData;zip.file('web/family-data.js','window.GENEALOGY = '+JSON.stringify(portable).replace(/</g,'\\u003c')+';\n');zip.file('data/tree.json',JSON.stringify(portable)+'\n');for(const lang of ['pl','ru','en'])zip.file('data/tree.'+lang+'.json',JSON.stringify(value.translations?.[lang]||{language:lang,people:{},issues:{}})+'\n');zip.file('JAK-ZAPISAC.txt','Archiwum zawiera zmienione dane i nowe zdjęcia. Rozpakuj je w dotychczasowym folderze projektu, zastępując family-tree.json, family-translations.json, data/tree*.json i web/family-data.js. Stare zdjęcia pozostają w photos/.\n');download(await zip.generateAsync({type:'blob'}),'zmiany-drzewa.zip');}};
+    },async exportChanges(useStale=false){const value=useStale?this.staleBackup:this.state,zip=new JSZip();zip.file('family-tree.json',JSON.stringify(value.data,null,2)+'\n');zip.file('family-translations.json',JSON.stringify(value.translations||{},null,2)+'\n');if(value.presentation?.version===1)zip.file('family-presentation.json',JSON.stringify(value.presentation,null,2)+'\n');for(const[path,url]of Object.entries(value.photoData||{}))zip.file(path,url.split(',')[1],{base64:true});const portable=clone(value);delete portable.photoData;zip.file('web/family-data.js','window.GENEALOGY = '+JSON.stringify(portable).replace(/</g,'\\u003c')+';\n');zip.file('data/tree.json',JSON.stringify(portable)+'\n');for(const lang of ['pl','ru','en'])zip.file('data/tree.'+lang+'.json',JSON.stringify(value.translations?.[lang]||{language:lang,people:{},issues:{}})+'\n');zip.file('JAK-ZAPISAC.txt','Archiwum zawiera zmienione dane i nowe zdjęcia. Rozpakuj je w dotychczasowym folderze projektu, zastępując family-tree.json, family-translations.json, family-presentation.json (jeśli jest w ZIP), data/tree*.json i web/family-data.js. Stare zdjęcia pozostają w photos/.\n');download(await zip.generateAsync({type:'blob'}),'zmiany-drzewa.zip');}};
   }
   return{open,photoSource,thumbnail};
 })();

@@ -27,4 +27,5 @@ ui-debug*.log
 
 # Local multilingual family text and generated JSON snapshots.
 /family-translations.json
+/family-presentation.json
 /data/tree*.json
