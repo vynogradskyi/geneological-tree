@@ -1,6 +1,142 @@
 /* Deterministic family areas. No names, real-person IDs or inferred marriage status. */
 window.GenealogyFamilyLayout = (() => {
-  const VERSION=2;
+  const VERSION=3;
+  // x(child) = mean(x(parents)) for singleton families. Orthogonal projection
+  // keeps these equations exact while Hildreth's dual updates enforce row gaps.
+  // This minimizes squared horizontal positions for the selected family order.
+  function alignChildren(layout, people, width, gap, padding) {
+    const ids = Object.keys(layout.nodes).sort();
+    const index = new Map(ids.map((id, i) => [id, i]));
+    const count = ids.length;
+    const vector = () => Array(count).fill(0);
+    const dot = (a, b) => a.reduce((sum, value, i) => sum + value * b[i], 0);
+    const basis = [], families = new Map();
+    for (const person of people.values()) if (person.Mommy || person.Daddy) {
+      const key = JSON.stringify([person.Mommy, person.Daddy]);
+      if (!families.has(key)) families.set(key, []);
+      families.get(key).push(person);
+    }
+    for (const children of families.values()) if (children.length === 1) {
+      const child = children[0], parents = [child.Mommy, child.Daddy].filter(Boolean);
+      const normal = vector();
+      normal[index.get(child.id)] = 1;
+      for (const parent of parents) normal[index.get(parent)] -= 1 / parents.length;
+      // Reorthogonalization avoids drift in long, uneven ancestor chains.
+      for (let pass = 0; pass < 2; pass++) for (const axis of basis) {
+        const amount = dot(normal, axis);
+        for (let i = 0; i < count; i++) normal[i] -= amount * axis[i];
+      }
+      const length = Math.sqrt(dot(normal, normal));
+      if (length > 1e-9) basis.push(normal.map(value => value / length));
+    }
+    function project(input) {
+      const result = input.slice();
+      for (const axis of basis) {
+        const amount = dot(result, axis);
+        for (let i = 0; i < count; i++) result[i] -= amount * axis[i];
+      }
+      return result;
+    }
+    const coordinates = project(ids.map(id => layout.nodes[id].x));
+    const policy = layout.layoutPolicy;
+    const units = new Map(ids.map(id => [id, policy.pairs.find(pair => pair.includes(id)) || [id]]));
+    const trunks = new Map(ids.map(id => [id, policy.areas[policy.personAreas[id]].path.match(/^root([01]*)/)[1]]));
+    function branchBefore(a, b) {
+      const left = trunks.get(a), right = trunks.get(b);
+      let i = 0;
+      while (i < Math.min(left.length, right.length) && left[i] === right[i]) i++;
+      return i < Math.min(left.length, right.length) && left[i] === '0';
+    }
+    function mustPrecede(a, b) {
+      return a.some(id => b.some(other => branchBefore(id, other))) ||
+        [...people.values()].some(person => a.includes(person.Mommy) && b.includes(person.Daddy));
+    }
+    function blocks(row) {
+      const pending = new Set(row), result = [];
+      for (const id of row) if (pending.has(id)) {
+        const members = units.get(id).filter(other => pending.has(other));
+        members.sort((a, b) => row.indexOf(a) - row.indexOf(b));
+        for (const member of members) pending.delete(member);
+        result.push(members);
+      }
+      return result;
+    }
+    // Ancestor regions and mother/father roles are hard precedence constraints.
+    // A prefix is not a competing branch: descendants can share an ancestor axis.
+    let rows = {};
+    for (const [rank, row] of Object.entries(policy.rowOrder)) {
+      const groups = blocks(row), sorted = [];
+      const predecessors = new Map(groups.map(group => [group, groups.filter(other => other !== group && mustPrecede(other, group))]));
+      const mean = group => group.reduce((sum, id) => sum + coordinates[index.get(id)], 0) / group.length;
+      while (sorted.length < groups.length) {
+        const ready = groups.filter(group => !sorted.includes(group) && predecessors.get(group).every(other => sorted.includes(other)));
+        if (!ready.length) throw Error('Nie można zachować kolejności rodzin. Sprawdź powiązania.');
+        ready.sort((a, b) => mean(a) - mean(b) || row.indexOf(a[0]) - row.indexOf(b[0]));
+        sorted.push(ready[0]);
+      }
+      rows[rank] = sorted.flat();
+    }
+    let maxViolation = Infinity;
+    const seen = new Set([JSON.stringify(rows)]);
+    // Bounded retries can exchange unconstrained neighboring family blocks.
+    // Confirmed couples, branch order and parental roles never change sides.
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const clauses = [];
+      for (const row of Object.values(rows)) for (let j = 1; j < row.length; j++) {
+        const a = index.get(row[j - 1]), b = index.get(row[j]), difference = vector();
+        difference[b] = 1; difference[a] = -1;
+        const normal = project(difference);
+        clauses.push({a, b, normal, norm: dot(normal, normal), lambda: 0});
+      }
+      coordinates.fill(0);
+      for (let iteration = 0; iteration < 5000; iteration++) {
+        let step = 0;
+        for (const clause of clauses) {
+          if (clause.norm < 1e-12) continue;
+          const {a, b, normal, norm} = clause;
+          const next = Math.max(0, clause.lambda + (width + gap - coordinates[b] + coordinates[a]) / norm);
+          const delta = next - clause.lambda;
+          clause.lambda = next;
+          step = Math.max(step, Math.abs(delta));
+          if (delta) for (let i = 0; i < count; i++) coordinates[i] += delta * normal[i];
+        }
+        maxViolation = Math.max(0, ...clauses.map(({a, b}) => width + gap - coordinates[b] + coordinates[a]));
+        if (maxViolation < 1e-7 && step < 1e-7) break;
+      }
+      if (maxViolation < 1e-5) break;
+      const movable = clauses.filter(({a, b}) => {
+        const left = units.get(ids[a]), right = units.get(ids[b]);
+        return !left.some(id => right.includes(id)) && !mustPrecede(left, right);
+      }).sort((a, b) => b.lambda - a.lambda);
+      let exchanged = false;
+      for (const clause of movable) {
+        const rank = layout.ranks[ids[clause.a]], row = rows[rank];
+        const left = blocks(row).find(group => group.includes(ids[clause.a]));
+        const right = blocks(row).find(group => group.includes(ids[clause.b]));
+        const next = row.slice(), start = row.indexOf(left[0]);
+        next.splice(start, left.length + right.length, ...right, ...left);
+        const candidate = {...rows, [rank]: next}, signature = JSON.stringify(candidate);
+        if (seen.has(signature)) continue;
+        seen.add(signature); rows = candidate; exchanged = true; break;
+      }
+      if (!exchanged) break;
+    }
+    if (maxViolation > 1e-5) throw Error('Nie można wyrównać rodzin bez nakładania kart. Sprawdź powiązania.');
+    // Uniform expansion absorbs floating point gap error and preserves all axes.
+    for (let i = 0; i < count; i++) coordinates[i] *= 1 + 1e-7;
+    const offset = padding - Math.min(...coordinates);
+    for (let i = 0; i < count; i++) layout.nodes[ids[i]].x = coordinates[i] + offset;
+    policy.rowOrder = rows;
+    for (const area of Object.values(policy.areas)) {
+      const members = ids.filter(id => {
+        const path = policy.areas[policy.personAreas[id]].path;
+        return path === area.path || ['0', '1', '/'].some(suffix => path.startsWith(area.path + suffix));
+      });
+      area.left = Math.min(...members.map(id => layout.nodes[id].x));
+      area.right = Math.max(...members.map(id => layout.nodes[id].x + width));
+    }
+    layout.width = Math.max(...coordinates) + offset + width + padding;
+  }
   function create(data){
     const {width:W,height:H,gap:GAP}=window.GenealogyCardMetrics,LEVEL=H+108,PAD=64;
     const P=new Map(data.people.map(p=>[p.id,p]));
@@ -80,7 +216,10 @@ window.GenealogyFamilyLayout = (() => {
     for(const r of data.relationships)edges.push({kind:'marriage',tail:r.personIds[0],head:r.personIds[1],relationshipId:r.id,status:r.status,paths:[],labels:[{text:r.status==='rozwiedzeni'?'rozwód':r.previousRelationshipId?'późniejsze małżeństwo':'małżeństwo',x:0,y:0}]});
     const rowOrder={};for(const[id,rank]of Object.entries(ranks)){rowOrder[rank]||=[];rowOrder[rank].push(id);}for(const ids of Object.values(rowOrder))ids.sort((a,b)=>nodes[a].x-nodes[b].x);
     const pairs=data.relationships.filter(r=>r.status==='trwa').map(r=>r.personIds);
-    return {nodes,edges:window.GenealogyRouting.routeEdges(nodes,edges),ranks,branches,direct:[...direct].sort(),generations:max-min+1,width:tree.width+2*PAD,height:(max-min)*LEVEL+H+2*PAD,disconnectedPeople:[...P.keys()].filter(id=>!connected.has(id)),layoutPolicy:{version:VERSION,areas,personAreas,rowOrder,pairs},layoutWarnings:[...new Set(warnings)]};
+    const result={nodes,edges,ranks,branches,direct:[...direct].sort(),generations:max-min+1,width:tree.width+2*PAD,height:(max-min)*LEVEL+H+2*PAD,disconnectedPeople:[...P.keys()].filter(id=>!connected.has(id)),layoutPolicy:{version:VERSION,areas,personAreas,rowOrder,pairs},layoutWarnings:[...new Set(warnings)]};
+    alignChildren(result,P,W,GAP,PAD);
+    result.edges=window.GenealogyRouting.routeEdges(nodes,edges);
+    return result;
   }
   return {create,version:VERSION};
 })();

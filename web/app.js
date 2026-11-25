@@ -100,7 +100,11 @@
     if(viewport.clientHeight<500){focusPerson(G.data.rootPersonId,.75);return;}
     const p=people.get(G.data.rootPersonId),nodes=[p.id,p.Mommy,p.Daddy].filter(Boolean).map(id=>G.nodes[id]);
     const left=Math.min(...nodes.map(n=>n.x)),right=Math.max(...nodes.map(n=>n.x+n.w)),top=Math.min(...nodes.map(n=>n.y)),bottom=Math.max(...nodes.map(n=>n.y+n.h));
-    const root=G.nodes[p.id];state.scale=Math.min(.9,(viewport.clientWidth-24)/(right-left),(viewport.clientHeight-96)/(bottom-top));
+    const familyScale=Math.min(.9,(viewport.clientWidth-24)/(right-left),(viewport.clientHeight-96)/(bottom-top));
+    // Expanded ancestor branches can put the parents several screens apart.
+    // Keep the root readable; relatives remain accessible through the person sheet.
+    if(familyScale<.5){focusPerson(p.id,.75);return;}
+    state.scale=familyScale;
     state.x=(viewport.clientWidth-(right-left)*state.scale)/2-left*state.scale;state.y=(viewport.clientHeight-76-(bottom-top)*state.scale)/2-top*state.scale;transform();
   }
   $('go-root').onclick=goRoot;
