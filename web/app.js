@@ -90,6 +90,7 @@
     $('people').append(button);GenealogyCardView.fit(button);personButtons.set(p.id,button);
   }
   const author=fullName(people.get(G.data.rootPersonId));$('author-name').textContent=author;$('go-root').textContent=people.get(G.data.rootPersonId).firstName||t('Osoba główna');document.title=t('Moje drzewo genealogiczne')+' · '+author;
+  $('go-root').textContent=display(people.get(G.data.rootPersonId)).firstName||t('Osoba główna');
   $('summary').textContent=I.summary(people.size,G.generations);
   $('updated-on').textContent=G.updatedOn;$('mobile-root-name').textContent=fullName(people.get(G.data.rootPersonId));
   I.dom();generations.refresh();updateGenerations();
@@ -158,7 +159,8 @@
   function relativeRow(label, ids){return `<div class="relative-row"><span>${esc(label)}</span><div class="relative-list">${ids.length?ids.map(relationButton).join(''):'<span class="unknown">brak danych</span>'}</div></div>`;}
   function linkify(text){return esc(text).replace(/https?:\/\/[^\s<>]+/g,url=>{const clean=url.replace(/[.,;]$/,'');return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>`+url.slice(clean.length);});}
   let onPersonView = () => {};
-  function openPerson(id){
+  function openPerson(id,{preserveView=false}={}){
+    const previousScroll=personDialog.scrollTop,previousView={...state};
     onPersonView();
     const p=display(people.get(id));state.selected=id;
     for(const[pid,button]of personButtons)button.classList.toggle('selected',pid===id);
@@ -184,6 +186,7 @@
     $('person-details').querySelectorAll('[data-relative]').forEach(button=>button.onclick=()=>{const next=button.dataset.relative;focusPerson(next,state.scale<.65?.9:state.scale);if(responsive.mobile)sheetReturn={x:state.x,y:state.y,scale:state.scale};openPerson(next);});
     if(p.photo)$('enlarge-portrait').onclick=()=>{$('full-photo').src=photoSource(p);$('full-photo').alt=fullName(p);photoDialog.showModal();};
     if(!personDialog.open){if(responsive.mobile)sheetReturn={x:state.x,y:state.y,scale:state.scale};personDialog.classList.remove('sheet-expanded');$('toggle-person-size').setAttribute('aria-expanded','false');personDialog.showModal();}if(responsive.mobile&&!personDialog.classList.contains('sheet-expanded')){const node=G.nodes[id],free=Math.max(120,viewport.clientHeight-personDialog.offsetHeight);state.x=viewport.clientWidth/2-(node.x+node.w/2)*state.scale;state.y=free/2-(node.y+node.h/2)*state.scale;transform();}personDialog.scrollTop=0;
+    if(preserveView){Object.assign(state,previousView);transform();personDialog.scrollTop=previousScroll;}
     $('announcer').textContent=t('Otwarta karta: {value}',{value:fullName(p)});I.dom(personDialog);
   }
   $('close-person').onclick=()=>personDialog.close();$('close-photo').onclick=()=>photoDialog.close();
@@ -206,16 +209,20 @@
     cardLayout.refresh();drawTree();editor.refresh();
     if(personDialog.open&&state.selected)openPerson(state.selected);I.dom();
   }});
-  const languageSelect=$('language-select');languageSelect.value=I.language;
-  languageSelect.onchange=()=>{
-    if(editor?.isDirty()){languageSelect.value=I.language;message(t('Najpierw zapisz lub anuluj edycję, aby zmienić język.'));return;}
-    I.setLanguage(languageSelect.value);drawTree();editor?.refresh();family?.refresh();
-    if(personDialog.open&&state.selected)openPerson(state.selected);
-    closeSearch();I.dom();
-  };
+  const languageSelectors=[$('language-select'),$('person-language-select')];
+  for(const select of languageSelectors){
+    select.value=I.language;
+    select.onchange=()=>{
+      if(editor?.isDirty()){select.value=I.language;message(t('Najpierw zapisz lub anuluj edycję, aby zmienić język.'));return;}
+      I.setLanguage(select.value);languageSelectors.forEach(other=>other.value=I.language);
+      drawTree();editor?.refresh();family?.refresh();
+      if(personDialog.open&&state.selected)openPerson(state.selected,{preserveView:true});
+      closeSearch();I.dom();
+    };
+  }
   const search=$('person-search'),results=$('search-results');
   function closeSearch(){responsive.closeSearch();results.hidden=true;search.setAttribute('aria-expanded','false');}
-  search.addEventListener('input',()=>{const query=normal(search.value.trim());if(!query){closeSearch();return;}const matches=[...people.values()].filter(p=>normal([fullName(p),p.firstName,p.lastName,p.maidenName,...p.formerLastNames,...display(p).formerLastNames,...Object.values(display(p).birthPlace||{}),p.birthYear].filter(Boolean).join(' ')).includes(query));results.innerHTML=matches.length?matches.map(p=>`<button type="button" data-result="${p.id}">${esc(shortName(p))}<small>${esc(life(p))}${p.maidenName?' · z domu '+esc(p.maidenName):''}</small></button>`).join(''):'<p class="no-results">Nie znaleziono osoby.</p>';results.hidden=false;search.setAttribute('aria-expanded','true');I.dom(results);results.querySelectorAll('button').forEach(button=>button.onclick=()=>{const id=button.dataset.result;closeSearch();search.value='';focusPerson(id,1);openPerson(id);});});
+  search.addEventListener('input',()=>{const query=normal(search.value.trim());if(!query){closeSearch();return;}const matches=[...people.values()].filter(p=>normal(I.searchText(p,G)).includes(query));results.innerHTML=matches.length?matches.map(p=>`<button type="button" data-result="${p.id}">${esc(shortName(p))}<small>${esc(life(p))}${display(p).maidenName?' · '+esc(t('z domu {value}',{value:display(p).maidenName})):''}</small></button>`).join(''):'<p class="no-results">Nie znaleziono osoby.</p>';results.hidden=false;search.setAttribute('aria-expanded','true');I.dom(results);results.querySelectorAll('button').forEach(button=>button.onclick=()=>{const id=button.dataset.result;closeSearch();search.value='';focusPerson(id,1);openPerson(id);});});
   search.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();if(e.key==='ArrowDown'){e.preventDefault();results.querySelector('button')?.focus();}if(e.key==='Enter')results.querySelector('button')?.click();});
   document.addEventListener('click',e=>{if(!responsive.mobile&&!e.target.closest('.search-box'))closeSearch();});
   responsive.onChange(()=>{cardLayout.setMobile(responsive.mobile);});

@@ -13,6 +13,17 @@ vm.createContext(context);vm.runInContext(fs.readFileSync('web/i18n.js','utf8'),
  assert.equal(localized.notes,'English note');assert.equal(localized.Mommy,raw.Mommy);assert.equal(localized.birthDate,raw.birthDate);assert.equal(raw.notes,'tekst polski');
  raw.notes='zmieniono tekst';assert.equal(I.person(raw,state).notes,raw.notes);
  I.setLanguage('ru');assert.equal(I.t('Zapisz'),'Сохранить');
+ const sample={...raw,firstName:'Alicja',lastName:'Testowa',maidenName:'Dawna',formerLastNames:['Starsza'],birthPlace:{city:'Miasto'},birthYear:1989};
+ const sampleState={translations:{ru:{people:{[sample.id]:{source:{firstName:'Alicja',maidenName:'Dawna',notes:sample.notes},values:{firstName:'Алиса',maidenName:'Прежняя',notes:'Русское примечание'}}}},en:{people:{[sample.id]:{source:{firstName:'Alicja'},values:{firstName:'Alice'}}}}}};
+ const before=JSON.stringify(sample);
+ for(const [language,expected] of [['pl','Alicja'],['ru','Алиса'],['en','Alice'],['pl','Alicja']]){I.setLanguage(language);assert.equal(I.person(sample,sampleState).firstName,expected);}
+ I.setLanguage('ru');
+ assert.match(I.searchText(sample,sampleState),/Алиса.*Прежняя/);
+ assert.match(I.searchText(sample,sampleState),/Alicja.*Dawna/);
+ assert.equal(I.person(sample,sampleState).lastName,'Testowa');
+ sampleState.translations.ru.people[sample.id].source.firstName='Outdated';
+ assert.equal(I.person(sample,sampleState).firstName,'Alicja');
+ assert.equal(JSON.stringify(sample),before);
  I.setLanguage('invalid');assert.equal(I.language,'ru');
  I.setLanguage('pl');assert.equal(I.person(raw,state),raw);
  console.log('I18n: locale keys, interpolation, shared facts, unchanged originals and stale translation fallback verified.');

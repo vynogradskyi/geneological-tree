@@ -31,3 +31,5 @@
 .node-placeholder b{font-size:44px}.node-placeholder span{font-size:12px}
 .person-node.selected{outline:3px solid #bd8d43;outline-offset:4px}.person-node.branch-root{border:2px solid var(--green)}
 @media(max-width:360px){.view-controls{flex-wrap:wrap}.zoom-controls{margin-left:auto}.layout-history{flex-wrap:wrap}}
+
+#person-language-select{font:inherit;min-width:56px;min-height:44px;border:1px solid var(--border);border-radius:9px;background:#fff;color:inherit;padding:6px}#person-language-select:focus-visible{outline:3px solid #c08b32;outline-offset:3px}

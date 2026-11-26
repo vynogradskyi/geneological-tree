@@ -44,6 +44,12 @@ window.GenealogyI18n = (() => {
     const hasText=value=>typeof value==='string'?!!value.trim():value&&typeof value==='object'?Object.values(value).some(hasText):false;
     return fields.some(key=>hasText(raw[key])&&!['firstName','lastName','maidenName','patronymic','formerLastNames'].includes(key)&&(!entry||!Object.hasOwn(entry.values,key)||JSON.stringify(entry.source[key])!==JSON.stringify(raw[key])));
   }
+  function searchText(raw,state){
+    const p=person(raw,state);
+    return [raw.firstName,raw.lastName,raw.maidenName,...raw.formerLastNames,
+      p.firstName,p.lastName,p.maidenName,...p.formerLastNames,
+      ...Object.values(p.birthPlace||{}),p.birthYear].filter(Boolean).join(' ');
+  }
   function issue(raw,state) {
     const entry=state.translations?.[language]?.issues?.[raw.id];
     return entry&&entry.source===(raw.question||raw.topic)?entry.value:(raw.question||raw.topic);
@@ -64,5 +70,5 @@ window.GenealogyI18n = (() => {
     if(!languages.includes(lang))return;language=lang;document.documentElement.lang=lang;
     try{localStorage.setItem('genealogy-language',lang);}catch{}
   }
-  return {ready,t,translate,dom,person,issue,hasStale,summary,fields,setLanguage,get language(){return language;}};
+  return {ready,t,translate,dom,person,issue,hasStale,searchText,summary,fields,setLanguage,get language(){return language;}};
 })();
