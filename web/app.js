@@ -172,7 +172,8 @@
     const issues=G.issues.filter(q=>q.personIds?.includes(id));
     const portrait=p.photo?`<button class="portrait-button" type="button" id="enlarge-portrait" aria-label="Powiększ zdjęcie ${esc(fullName(p))}"><img src="${esc(photoSource(p))}" alt="Portret: ${esc(fullName(p))}"><span>Powiększ zdjęcie</span></button>`:`<div class="detail-initials">${esc(p.firstName?.[0]||'?')}</div>`;
     const status=p.isLiving===true?'żyje':p.isLiving===false?'osoba zmarła':'nieustalony';
-    const facts=[['Data urodzenia',GenealogyDates.part(p,'birth')],['Miejsce urodzenia',place(p.birthPlace)],['Status życia',status],['Data śmierci',GenealogyDates.part(p,'death')],['Miejsce śmierci',place(p.deathPlace)]];
+    const facts=[['Data urodzenia',GenealogyDates.part(p,'birth')],['Miejsce urodzenia',place(p.birthPlace)],['Status życia',status]];
+    if(p.isLiving!==true)facts.push(['Data śmierci',GenealogyDates.part(p,'death')],['Miejsce śmierci',place(p.deathPlace)]);
     if(!p.lastName)facts.unshift(['Nazwisko','nieznane']);
     if(p.deathCircumstances)facts.push(['Okoliczności śmierci',p.deathCircumstances]);
     if(p.patronymic)facts.push(['Imię odojcowskie',p.patronymic]);
