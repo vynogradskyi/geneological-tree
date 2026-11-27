@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Dane projektu szkolnego „Moje drzewo genealogiczne”",
-  "description": "Dane krewnych w języku polskim. Powiązania rodzinne wskazują stałe identyfikatory osób.",
+  "description": "Dane krewnych. family-tree.pl.json jest plikiem głównym (tekst po polsku). family-tree.ru.json i family-tree.en.json to pełne kopie tych samych osób: różnią się tylko polami tekstowymi, a ID, daty, powiązania i zdjęcia są takie same jak w pliku polskim. Powiązania rodzinne wskazują stałe identyfikatory osób.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -30,13 +30,64 @@
       }
     },
     "language": {
-      "const": "pl",
-      "description": "Język wszystkich danych tekstowych o rodzinie: polski."
+      "enum": [
+        "pl",
+        "ru",
+        "en"
+      ],
+      "description": "Język pól tekstowych w tym pliku: pl (plik główny), ru lub en."
     },
     "relationships": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/marriage"
+      }
+    },
+    "translation": {
+      "description": "Tylko w kopiach ru/en: z jakiego polskiego tekstu powstało każde tłumaczenie. Gdy tekst polski się zmieni, strona pokazuje polski zamiast nieaktualnego tłumaczenia.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "plSha256",
+        "people",
+        "issues"
+      ],
+      "properties": {
+        "from": {
+          "const": "family-tree.pl.json"
+        },
+        "plSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Odcisk danych polskich, z których wygenerowano ten plik. Jeśli się zgadza, ręczna zmiana pola tekstowego w tym pliku jest traktowana jako nowe tłumaczenie."
+        },
+        "people": {
+          "type": "object",
+          "description": "ID osoby → {pole: polski tekst źródłowy tłumaczenia}.",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "issues": {
+          "type": "object",
+          "description": "ID pytania do wyjaśnienia → {source: polskie pytanie, value: tłumaczenie}.",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "source",
+              "value"
+            ],
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -162,7 +213,7 @@
           }
         },
         "photo": {
-          "description": "Względna ścieżka do zapisanego zdjęcia, np. photos/person_0001.jpg; null, jeśli brak zdjęcia.",
+          "description": "Zdjęcie jako photos/<plik>; sam plik leży w Data/Photos/<plik>. null, jeśli brak zdjęcia.",
           "type": [
             "string",
             "null"

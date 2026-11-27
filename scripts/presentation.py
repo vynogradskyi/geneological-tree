@@ -1,11 +1,12 @@
 """Private, explicit display preferences; family facts remain in the canonical JSON."""
 import json
-from pathlib import Path
 import re
+
+from family_store import presentation_path
 
 
 def load_presentation(root, data):
-    path = Path(root) / 'family-presentation.json'
+    path = presentation_path(root)
     if not path.exists():
         return {}
     value = json.loads(path.read_text())

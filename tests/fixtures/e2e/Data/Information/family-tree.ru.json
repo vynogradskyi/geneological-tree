@@ -1,0 +1,472 @@
+{
+  "$schema": "./family-tree.schema.json",
+  "version": "1.2",
+  "language": "ru",
+  "rootPersonId": "person_0001",
+  "people": [
+    {
+      "id": "person_0001",
+      "firstName": "Софья",
+      "lastName": "Testowa",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 2010,
+      "deathYear": null,
+      "birthDate": "2010-05-14",
+      "deathDate": null,
+      "isLiving": true,
+      "birthPlace": {
+        "city": "Gdańsk",
+        "country": "Polska",
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": "person_0003",
+      "Daddy": "person_0002",
+      "siblings": [],
+      "photo": "photos/person_0001.png",
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny.",
+        "Strona źródłowa: https://example.org/zrodlo-testowe."
+      ],
+      "notes": "Notatka testowa <img src=x onerror=\"window.__xss=1\"> pozostaje zwykłym tekstem."
+    },
+    {
+      "id": "person_0002",
+      "firstName": "Jan",
+      "lastName": "Testowy",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 1980,
+      "deathYear": null,
+      "birthDate": "1980",
+      "deathDate": null,
+      "isLiving": true,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": "person_0007",
+      "Daddy": "person_0008",
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null,
+      "occupation": "Inżynier testów"
+    },
+    {
+      "id": "person_0003",
+      "firstName": "Anna",
+      "lastName": "Testowa",
+      "patronymic": null,
+      "maidenName": "Лодзкая",
+      "formerLastNames": [],
+      "birthYear": 1982,
+      "deathYear": null,
+      "birthDate": "1982-03-01",
+      "deathDate": null,
+      "isLiving": null,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": "person_0005",
+      "Daddy": "person_0006",
+      "siblings": [
+        "person_0009"
+      ],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0004",
+      "firstName": "Piotr",
+      "lastName": "Testowy",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 2013,
+      "deathYear": null,
+      "birthDate": "2013",
+      "deathDate": null,
+      "isLiving": true,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": "person_0003",
+      "Daddy": "person_0002",
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0005",
+      "firstName": "Maria",
+      "lastName": "Łódzka",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 1950,
+      "deathYear": 2015,
+      "birthDate": "1950",
+      "deathDate": "2015-11-02",
+      "isLiving": false,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": "Kraków",
+        "country": "Polska",
+        "region": null
+      },
+      "Mommy": null,
+      "Daddy": null,
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0006",
+      "firstName": "Stanisław",
+      "lastName": "Łódzki",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": null,
+      "deathYear": null,
+      "birthDate": null,
+      "deathDate": null,
+      "isLiving": null,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": null,
+      "Daddy": null,
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0007",
+      "firstName": "Ewa",
+      "lastName": "Testowa",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 1955,
+      "deathYear": null,
+      "birthDate": "1955",
+      "deathDate": null,
+      "isLiving": true,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": null,
+      "Daddy": null,
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0008",
+      "firstName": "Adam",
+      "lastName": "Testowy",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 1952,
+      "deathYear": 2001,
+      "birthDate": "1952",
+      "deathDate": "2001",
+      "isLiving": false,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": null,
+      "Daddy": null,
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null,
+      "deathDateNote": "około"
+    },
+    {
+      "id": "person_0009",
+      "firstName": "Krystyna",
+      "lastName": "Obca",
+      "patronymic": null,
+      "maidenName": "Łódzka",
+      "formerLastNames": [],
+      "birthYear": 1978,
+      "deathYear": null,
+      "birthDate": "1978",
+      "deathDate": null,
+      "isLiving": true,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": "person_0005",
+      "Daddy": "person_0006",
+      "siblings": [
+        "person_0003"
+      ],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0010",
+      "firstName": "Tomasz",
+      "lastName": "Obcy",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 2005,
+      "deathYear": null,
+      "birthDate": "2005",
+      "deathDate": null,
+      "isLiving": true,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": "person_0009",
+      "Daddy": "person_0011",
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0011",
+      "firstName": "Michał",
+      "lastName": "Obcy",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": 1976,
+      "deathYear": null,
+      "birthDate": "1976",
+      "deathDate": null,
+      "isLiving": true,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": null,
+      "Daddy": null,
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    },
+    {
+      "id": "person_0012",
+      "firstName": null,
+      "lastName": "Dawny",
+      "patronymic": null,
+      "maidenName": null,
+      "formerLastNames": [],
+      "birthYear": null,
+      "deathYear": null,
+      "birthDate": null,
+      "deathDate": null,
+      "isLiving": null,
+      "birthPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "deathPlace": {
+        "city": null,
+        "country": null,
+        "region": null
+      },
+      "Mommy": null,
+      "Daddy": null,
+      "siblings": [],
+      "photo": null,
+      "sources": [
+        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
+      ],
+      "notes": null
+    }
+  ],
+  "relationships": [
+    {
+      "id": "relation_0001",
+      "type": "małżeństwo",
+      "personIds": [
+        "person_0003",
+        "person_0002"
+      ],
+      "status": "trwa",
+      "startYear": null,
+      "endYear": null,
+      "previousRelationshipId": null,
+      "sources": []
+    },
+    {
+      "id": "relation_0002",
+      "type": "małżeństwo",
+      "personIds": [
+        "person_0009",
+        "person_0011"
+      ],
+      "status": "trwa",
+      "startYear": null,
+      "endYear": null,
+      "previousRelationshipId": null,
+      "sources": []
+    },
+    {
+      "id": "relation_0003",
+      "type": "małżeństwo",
+      "personIds": [
+        "person_0003",
+        "person_0012"
+      ],
+      "status": "rozwiedzeni",
+      "startYear": null,
+      "endYear": null,
+      "previousRelationshipId": null,
+      "sources": []
+    },
+    {
+      "id": "relation_0004",
+      "type": "małżeństwo",
+      "personIds": [
+        "person_0005",
+        "person_0006"
+      ],
+      "status": "trwa",
+      "startYear": null,
+      "endYear": null,
+      "previousRelationshipId": null,
+      "sources": []
+    },
+    {
+      "id": "relation_0005",
+      "type": "małżeństwo",
+      "personIds": [
+        "person_0007",
+        "person_0008"
+      ],
+      "status": "zakończone",
+      "startYear": null,
+      "endYear": null,
+      "previousRelationshipId": null,
+      "sources": []
+    }
+  ],
+  "translation": {
+    "from": "family-tree.pl.json",
+    "plSha256": "cd1b025cf70d77b02d5117f37b31d1d07502183ba66eb49823d72e0cb1dbfc54",
+    "people": {
+      "person_0001": {
+        "firstName": "Zofia"
+      },
+      "person_0003": {
+        "maidenName": "Łódzka"
+      }
+    },
+    "issues": {
+      "issue_0001": {
+        "source": "Syntetyczne pytanie testowe: data urodzenia?",
+        "value": "Синтетический тестовый вопрос: дата рождения?"
+      }
+    }
+  }
+}

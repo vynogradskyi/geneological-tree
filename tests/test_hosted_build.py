@@ -24,9 +24,12 @@ class HostedBuildTest(unittest.TestCase):
                    'nodes': {'test_1': {'x': 1}}, 'isExample': False}
         self.files = {
             DATA_FILE: ('window.GENEALOGY = ' + json.dumps(payload) + ';\n').encode(),
+            'data/tree.json': json.dumps(payload).encode(),
+            **{f'data/tree.{lang}.json': json.dumps({'language': lang, 'people': {}, 'issues': {}}).encode()
+               for lang in ('pl', 'ru', 'en')},
             self.photo: b'synthetic test media - not a real family photo',
         }
-        self.manifest = {'version': 1, 'files': {
+        self.manifest = {'version': 2, 'files': {
             name: hashlib.sha256(content).hexdigest() for name, content in self.files.items()}}
         # Copy source assets only, never local family data.
         import shutil
@@ -47,29 +50,23 @@ class HostedBuildTest(unittest.TestCase):
     def build(self):
         return build_hosted('https://synthetic.web.app', self.output, self.root, self.fetch)
 
-    def test_preserves_data_and_media_with_family_prototype(self):
+    def test_preserves_data_and_media_as_read_only_viewer(self):
         self.assertEqual(self.build(), (1, 1))
         for name, content in self.files.items():
             self.assertEqual((self.output / name).read_bytes(), content)
+        self.assertEqual(json.loads((self.output / MANIFEST).read_text()), self.manifest)
         html = (self.output / 'index.html').read_text()
-        self.assertIn('data-family-prototype="true"', html)
-        self.assertIn('web/editor.js', html)
-        self.assertIn('web/editor-storage.js', html)
-        self.assertTrue((self.output / 'web/family-users.json').exists())
-        self.assertIn('id="family-login"', html)
+        self.assertNotIn('family-login', html)
+        self.assertNotIn('toggle-card-drag', html)
+        self.assertFalse((self.output / 'web/family-users.json').exists())
         self.assertIn('id="download-pdf"', html)
         self.assertEqual(self.build(), (1, 1))
 
-    def test_migrates_legacy_snapshot_to_json_and_preserves_v2_bytes(self):
-        self.build()
-        manifest=json.loads((self.output/MANIFEST).read_text())
-        self.assertEqual(manifest['version'],2)
-        self.assertIn('data/tree.en.json',manifest['files'])
-        self.files={name:(self.output/name).read_bytes() for name in manifest['files']}
-        self.manifest=manifest
-        self.build()
-        for name,content in self.files.items():
-            self.assertEqual((self.output/name).read_bytes(),content)
+    def test_rejects_unsupported_manifest_and_inconsistent_json(self):
+        self.manifest['version'] = 1
+        with self.assertRaisesRegex(ValueError, 'No supported'):
+            self.build()
+        self.manifest['version'] = 2
         altered=json.loads(self.files['data/tree.json'])
         altered['data']['people'][0]['photo']=None
         self.files['data/tree.json']=json.dumps(altered).encode()
@@ -120,7 +117,8 @@ class PresentationPreferencesTest(unittest.TestCase):
                                {'id': 'father', 'Mommy': None, 'Daddy': None}]}
             before = copy.deepcopy(data)
             self.assertEqual(load_presentation(root, data), {})
-            path = root / 'family-presentation.json'
+            path = root / 'Data/Project/family-presentation.json'
+            path.parent.mkdir(parents=True)
             settings = {'version': 1, 'layout': {'adjacentParents': [['mother', 'father']]},
                         'colors': {'father': '#a46b42'}}
             path.write_text(json.dumps(settings))

@@ -1,12 +1,12 @@
 {
   "$schema": "./family-tree.schema.json",
   "version": "1.2",
-  "language": "pl",
+  "language": "en",
   "rootPersonId": "person_0001",
   "people": [
     {
       "id": "person_0001",
-      "firstName": "Zofia",
+      "firstName": "Sophie",
       "lastName": "Testowa",
       "patronymic": null,
       "maidenName": null,
@@ -450,5 +450,15 @@
       "previousRelationshipId": null,
       "sources": []
     }
-  ]
+  ],
+  "translation": {
+    "from": "family-tree.pl.json",
+    "plSha256": "cd1b025cf70d77b02d5117f37b31d1d07502183ba66eb49823d72e0cb1dbfc54",
+    "people": {
+      "person_0001": {
+        "firstName": "Zofia"
+      }
+    },
+    "issues": {}
+  }
 }

@@ -7,28 +7,25 @@ venv/
 .env.*
 !.env.example
 
-# Local previews, tests, manual recovery copies, and generated documents.
+# Local previews, test scratch, build output and files waiting for manual deletion.
 /tmp/
-/backups/
 /output/
+/_to_delete/
 /.firebase/
 firebase-debug*.log
 ui-debug*.log
 *-firebase-adminsdk-*.json
 
-# Private family records and media stay on this computer.
-/family-tree.json
-/family-tree-review.json
+# Private family records, photos, sources and backups stay on this computer (Data/).
+# Only the schema is tracked.
+/Data/*
+!/Data/Information/
+/Data/Information/*
+!/Data/Information/family-tree.schema.json
+
+# Generated offline snapshot with family data (file:// viewing).
 /web/family-data.js
 /sdlc/task.md
-/sources/
-/photos/*
-!/photos/.gitkeep
-
-# Local multilingual family text and generated JSON snapshots.
-/family-translations.json
-/family-presentation.json
-/data/tree*.json
 
 # Беклог хранится только локально (решение владельца 27.11.2026)
 /sdlc/backlog.md

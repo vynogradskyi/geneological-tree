@@ -1,3 +1,5 @@
-const path=require('node:path'),{execFileSync}=require('node:child_process');
-for(const file of ['editor-storage','editor','responsive','data-loader','locale-bundle','branch-colors','generation-scale','family-fields','source-info','lineage','dates'])execFileSync(process.execPath,['--check',path.join(__dirname,'../web',file+'.js')],{stdio:'inherit'});
-for(const test of ['test_lineage','test_family_auth','test_i18n','test_family_layout','test_layout_cache','test_card_view','test_branch_colors','test_generation_scale','test_display_preferences','test_draft_display','test_dates','test_contracts','test_layout_golden'])require('./'+test+'.cjs');
+// Entry point for all Node checks (CI and tests/run_all.sh): syntax of every viewer module, then the unit tests.
+const fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process');
+const web=path.join(__dirname,'../web');
+for(const file of fs.readdirSync(web).filter(f=>f.endsWith('.js')))execFileSync(process.execPath,['--check',path.join(web,file)],{stdio:'inherit'});
+for(const test of ['test_line_routing','test_lineage','test_i18n','test_family_layout','test_card_view','test_branch_colors','test_generation_scale','test_display_preferences','test_dates','test_contracts','test_layout_golden'])require('./'+test+'.cjs');

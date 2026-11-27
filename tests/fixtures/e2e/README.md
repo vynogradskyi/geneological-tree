@@ -1,6 +1,6 @@
 # Синтетическое дерево для браузерных тестов
 
-Вымышленные люди (12 человек, 3 поколения), не связанные с реальной семьёй. Используются `tests/e2e_site.py` и `tests/test_e2e.py`.
+Вымышленные люди (12 человек, 3 поколения), не связанные с реальной семьёй. Используются `tests/e2e_site.py`, `tests/test_e2e.py` и `tests/test_layout_golden.cjs`. Структура повторяет настоящую папку `Data/`: `Data/Information/family-tree.{pl,ru,en}.json` и `Data/Project/family-tree-review.json`.
 
 Что намеренно покрыто данными:
 

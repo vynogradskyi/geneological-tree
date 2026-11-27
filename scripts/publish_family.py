@@ -9,7 +9,8 @@ from build_readonly import build_readonly
 from build_hosted import build_hosted, download
 from build_html import write_payload
 from readonly_assets import write_manifest
-from tree_json import read_json_payload, load_translations, merge_translation, translation_digest
+from family_store import load_translations
+from tree_json import read_json_payload, merge_translation, translation_digest
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = 'https://familytree-9505c.web.app'
