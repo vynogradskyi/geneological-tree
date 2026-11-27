@@ -1,4 +1,4 @@
-"""Validation shared by the local editor and its integration checks."""
+"""Validation of Data/Information records (schema subset + family-tree consistency)."""
 from datetime import date
 import json
 import re
@@ -96,5 +96,5 @@ def validate_document(data, schema):
             raise ValueError('Koniec małżeństwa nie może poprzedzać początku.')
         if r['previousRelationshipId'] and (r['previousRelationshipId'] not in relation_ids or r['previousRelationshipId'] == r['id']):
             raise ValueError('Nieprawidłowe poprzednie małżeństwo.')
-    if re.search('[\u0400-\u04ff]', json.dumps(data, ensure_ascii=False)):
+    if data['language'] == 'pl' and re.search('[\u0400-\u04ff]', json.dumps(data, ensure_ascii=False)):
         raise ValueError('Dane należy zapisać po polsku lub zatwierdzoną pisownią łacińską.')

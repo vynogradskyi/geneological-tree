@@ -9,21 +9,7 @@ window.GenealogyCardView = (() => {
     for(const edge of model.edges){edge.paths=edge.paths.map(path=>path.map(([x,y])=>[x*sx,y*sy]));edge.labels=edge.labels.map(label=>({...label,x:label.x*sx,y:label.y*sy}));}
     model.width*=sx;model.height*=sy;
   }
-  function migratePlacement(cache,model){
-    try{
-      const before=JSON.parse(cache.signature),after=Object.entries(model.nodes).sort(([a],[b])=>a.localeCompare(b));
-      if(JSON.stringify(before.ranks)!==JSON.stringify(Object.entries(model.ranks).sort(([a],[b])=>a.localeCompare(b))))return null;
-      const edges=model.edges.map(e=>[e.kind,e.tail,e.head]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
-      if(JSON.stringify(before.edges)!==JSON.stringify(edges)||before.nodes.length!==after.length)return null;
-      const scale=after[0][1].w/before.nodes[0][1].w;
-      if(Math.abs(scale-1)<.001)return null;
-      for(let i=0;i<after.length;i++){
-        const [oldId,oldNode]=before.nodes[i],[id,node]=after[i];
-        if(id!==oldId||Math.abs(node.w/oldNode.w-scale)>.001||Math.abs(node.h/oldNode.h-scale)>.001)return null;
-      }
-      return Object.fromEntries(Object.entries(cache.positions).map(([id,x])=>[id,x*scale]));
-    }catch{return null;}
-  }
+
   function fit(button){
     const names=button.querySelector('.node-names'),subtitle=button.querySelector('.node-subtitle'),dates=button.querySelector('.node-dates');
     if(!names||!dates)return;
@@ -51,5 +37,5 @@ window.GenealogyCardView = (() => {
     ctx.fillStyle='#65736a';font(12);y+=1;subtitleLines.forEach(line=>{ctx.fillText(line,cx,y);y+=14;});
     ctx.fillStyle='#23392f';font(14,true);dateLines.forEach((line,i)=>ctx.fillText(line,cx,n.y+n.h-12-(dateLines.length-i-1)*16));
   }
-  return {normalize,migratePlacement,fit,drawPDF};
+  return {normalize,fit,drawPDF};
 })();

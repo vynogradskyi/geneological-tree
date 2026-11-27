@@ -6,9 +6,9 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 const root=path.join(__dirname,'..'),goldenFile=path.join(__dirname,'golden/e2e-layout.json');
 const context={window:{},structuredClone};vm.createContext(context);
-for(const name of ['card-metrics','line-routing','family-layout','card-layout','branch-colors','card-view','lineage'])
+for(const name of ['card-metrics','line-routing','family-layout','branch-colors','card-view','lineage'])
  vm.runInContext(fs.readFileSync(path.join(root,'web',name+'.js'),'utf8'),context);
-const W=context.window,data=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/e2e/family-tree.json'),'utf8'));
+const W=context.window,data=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/e2e/Data/Information/family-tree.pl.json'),'utf8'));
 const model=W.GenealogyFamilyLayout.create(data,{});W.GenealogyCardView.normalize(model);
 const colors=W.GenealogyColors.create(data,model.edges,{});
 const round=n=>Math.round(n*10)/10,sorted=object=>Object.fromEntries(Object.entries(object).sort(([a],[b])=>a.localeCompare(b)));

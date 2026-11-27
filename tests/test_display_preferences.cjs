@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const context={window:{},structuredClone};vm.createContext(context);
-for(const file of ['card-metrics','line-routing','family-layout','card-layout','branch-colors','family-fields'])vm.runInContext(fs.readFileSync(`web/${file}.js`,'utf8'),context);
+for(const file of ['card-metrics','line-routing','family-layout','branch-colors','family-fields'])vm.runInContext(fs.readFileSync(`web/${file}.js`,'utf8'),context);
 const L=context.window.GenealogyFamilyLayout,C=context.window.GenealogyColors,F=context.window.GenealogyFields;
 const p=(id,Mommy=null,Daddy=null,siblings=[])=>({id,Mommy,Daddy,siblings});
 const data={rootPersonId:'child',people:[p('child','wife','husband'),p('wife',null,null,['brother']),p('husband'),p('brother',null,null,['wife']),p('son',null,'brother'),p('grandchild',null,'son')],relationships:[]};
@@ -13,9 +13,6 @@ assert(Math.abs(nodes.child.x-(nodes.wife.x+nodes.husband.x)/2)<1e-5);
 assert.equal(model.layoutPolicy.pairs.length,0,'Display adjacency must not infer a marriage');
 assert.equal(model.edges.filter(e=>e.kind==='marriage').length,0);
 for(const row of Object.values(model.layoutPolicy.rowOrder))for(let i=1;i<row.length;i++)assert(nodes[row[i]].x-nodes[row[i-1]].x>=224);
-const movable=structuredClone(model);for(const id of ['wife','husband'])movable.layoutPolicy.areas[movable.layoutPolicy.personAreas[id]].left=0;
-const moved=context.window.GenealogyCardLayout.constrained(movable.nodes,movable.layoutPolicy,'wife',nodes.wife.x-40);
-assert(Math.abs(moved.wife-nodes.wife.x+40)<1e-5);assert(Math.abs(moved.husband-nodes.husband.x+40)<1e-5);assert.equal(moved.brother,nodes.brother.x);
 const separated={rootPersonId:'child',people:[p('child','wife','husband'),p('wife','gm','gf',['sister']),p('sister','gm','gf',['wife']),p('husband'),p('gm'),p('gf')],relationships:[]};
 const ordered=L.create(separated,{layout:{adjacentParents:[['wife','husband']],before:[['sister','wife']]}});
 assert(ordered.nodes.sister.x<ordered.nodes.wife.x);assert(Math.abs(ordered.nodes.husband.x-ordered.nodes.wife.x-224)<.001);
@@ -38,4 +35,4 @@ assert(F.opacity<=.24,'A dense area cannot accumulate past the shared layer opac
 const shifted=structuredClone(layout);shifted.nodes.external.x+=60;shifted.edges=context.window.GenealogyRouting.routeEdges(shifted.nodes,shifted.edges);
 assert.notEqual(JSON.stringify(F.plan(shifted,theme)),JSON.stringify(field),'Fields follow placement and rerouted connections');
 assert.equal(JSON.stringify(F.plan(layout,theme)),JSON.stringify(field),'Pan, zoom and repeated drawing do not alter the field');
-console.log('Display preferences: outward branches, adjacent parents, sisters, preserved axes/facts, grouped movement, external color and bounded field rendering verified.');
+console.log('Display preferences: outward branches, adjacent parents, sisters, preserved axes/facts, external color and bounded field rendering verified.');

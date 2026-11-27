@@ -1,18 +1,15 @@
-"""JSON transport and language overlays. Personal translations remain outside Git."""
+"""Site JSON snapshots (data/tree*.json) and language overlays.
+
+These files are the published transport format; the local records live in Data/ (family_store.py).
+"""
 import copy
 import hashlib
 import json
 from pathlib import Path
 
-LANGUAGES=('pl','ru','en')
+from family_store import FIELDS, LANGUAGES
+
 JSON_FILES={'data/tree.json',*(f'data/tree.{lang}.json' for lang in LANGUAGES)}
-FIELDS=('firstName','lastName','maidenName','patronymic','formerLastNames','title','occupation',
-        'notes','deathCircumstances','birthDateNote','deathDateNote','birthPlace','deathPlace')
-
-
-def load_translations(root):
-    path=Path(root)/'family-translations.json'
-    return json.loads(path.read_text()) if path.exists() else {}
 
 
 def language_payloads(payload):
@@ -27,14 +24,6 @@ def language_payloads(payload):
             localized['people']={p['id']:{'source':{k:p.get(k) for k in FIELDS},'values':{k:p.get(k) for k in FIELDS}} for p in people}
         result[lang]=localized
     return result
-
-
-def write_json_payload(root,payload):
-    root=Path(root);(root/'data').mkdir(parents=True,exist_ok=True)
-    state={key:value for key,value in payload.items() if key!='translations'}
-    (root/'data/tree.json').write_text(json.dumps(state,ensure_ascii=False,separators=(',',':'))+'\n')
-    for lang,localized in language_payloads(payload).items():
-        (root/f'data/tree.{lang}.json').write_text(json.dumps(localized,ensure_ascii=False,separators=(',',':'))+'\n')
 
 
 def read_json_payload(root):

@@ -23,9 +23,8 @@ jobs:
           node-version: '22'
       - name: Check viewer and preservation logic
         run: |
-          node --check web/app.js
-          node --check web/viewer-storage.js
-          node tests/test_card_layout.cjs
+          node tests/check_viewer.cjs
+          python3 tests/test_family_store.py
           python3 tests/test_hosted_build.py
       - name: Editor and browser regression tests (synthetic data only)
         run: |

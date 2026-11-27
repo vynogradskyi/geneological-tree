@@ -1,4 +1,4 @@
-"""Refresh the offline HTML data without generating a PDF."""
+"""Build the viewer payload from Data/ and refresh the offline snapshot. Never creates a PDF."""
 from pathlib import Path
 from io import BytesIO
 from datetime import datetime
@@ -6,28 +6,26 @@ from zoneinfo import ZoneInfo
 import base64
 import hashlib
 import json
-import os
 from PIL import Image, ImageOps
+import family_store
 from genealogy_layout import create_layout
-from tree_json import load_translations, write_json_payload, language_payloads, translation_digest
+from tree_json import language_payloads, translation_digest
 from presentation import load_presentation
 
-def build_payload(root=None, data=None, review=None):
-    ROOT = Path(root or Path(__file__).resolve().parents[1])
-    data = data if data is not None else json.loads((ROOT / 'family-tree.json').read_text())
-    review = review if review is not None else json.loads((ROOT / 'family-tree-review.json').read_text())
-    presentation=load_presentation(ROOT, data)
-    layout=create_layout(data, presentation=presentation)
-    thumbnails = {}
-    for p in data['people']:
-        if not p['photo']:
-            continue
-        with Image.open(ROOT / p['photo']) as source:
-            image = ImageOps.exif_transpose(source).convert('RGB')
-            image.thumbnail((360, 480), Image.Resampling.LANCZOS)
-            stream = BytesIO()
-            image.save(stream, format='JPEG', quality=87, optimize=True)
-            thumbnails[p['id']] = 'data:image/jpeg;base64,' + base64.b64encode(stream.getvalue()).decode()
+ROOT = Path(__file__).resolve().parents[1]
+OFFLINE_SNAPSHOT = 'web/family-data.js'
+
+
+def thumbnail(path):
+    with Image.open(path) as source:
+        image = ImageOps.exif_transpose(source).convert('RGB')
+    image.thumbnail((360, 480), Image.Resampling.LANCZOS)
+    stream = BytesIO()
+    image.save(stream, format='JPEG', quality=87, optimize=True)
+    return 'data:image/jpeg;base64,' + base64.b64encode(stream.getvalue()).decode()
+
+
+def disconnected_people(data):
     adjacency = {p['id']: set() for p in data['people']}
     for p in data['people']:
         for ref in [p['Mommy'], p['Daddy'], *p['siblings']]:
@@ -44,48 +42,53 @@ def build_payload(root=None, data=None, review=None):
         if pid not in connected:
             connected.add(pid)
             pending.extend(adjacency[pid] - connected)
-    translations=load_translations(ROOT)
-    payload = {
+    return sorted(set(adjacency) - connected)
+
+
+def build_payload(root=ROOT, data=None, review=None, translations=None):
+    root = Path(root)
+    data = data if data is not None else family_store.load_data(root)
+    review = review if review is not None else family_store.load_review(root)
+    translations = translations if translations is not None else family_store.load_translations(root, data)
+    presentation = load_presentation(root, data)
+    layout = create_layout(data, presentation=presentation)
+    assert len(layout['nodes']) == len(data['people'])
+    return {
         'translations': translations,
         'translationSha256': translation_digest(translations),
-        'data': data, **layout, 'thumbnails': thumbnails, 'presentation': presentation,
+        'data': data, **layout,
+        'thumbnails': {p['id']: thumbnail(family_store.photo_file(root, p['photo'])) for p in data['people'] if p['photo']},
+        'presentation': presentation,
         'isExample': review.get('isExample', False),
-        'disconnectedPeople': sorted(set(adjacency) - connected),
+        'disconnectedPeople': disconnected_people(data),
         'issues': [q for q in review['issues'] if q['status'] == 'otwarte'],
         'credits': review.get('photoCredits', []),
         'updatedOn': datetime.now(ZoneInfo('Europe/Warsaw')).strftime('%d.%m.%Y'),
-        'sourceSha256': hashlib.sha256(json.dumps(data, ensure_ascii=False, indent=2).encode()+b'\n').hexdigest(),
+        'sourceSha256': hashlib.sha256(family_store.dumps(data).encode()).hexdigest(),
     }
-    assert len(layout['nodes']) == len(data['people'])
-    return payload
 
 
-def write_payload(root, payload):
-    root=Path(root)
-    encoded=json.dumps(payload,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
-    outputs={root/'web/family-data.js':'window.GENEALOGY = '+encoded+';\n',
-             root/'data/tree.json':json.dumps({k:v for k,v in payload.items() if k!='translations'},ensure_ascii=False,separators=(',',':'))+'\n'}
-    outputs.update({root/f'data/tree.{lang}.json':json.dumps(value,ensure_ascii=False,separators=(',',':'))+'\n' for lang,value in language_payloads(payload).items()})
-    previous={path:path.read_bytes() if path.exists() else None for path in outputs}
-    staged={}
-    try:
-        for path,text in outputs.items():
-            path.parent.mkdir(parents=True,exist_ok=True)
-            temp=path.with_suffix(path.suffix+'.tmp');staged[path]=temp;temp.write_text(text)
-        for path,temp in staged.items():temp.replace(path)
-    except Exception:
-        for path,content in previous.items():
-            if content is None:path.unlink(missing_ok=True)
-            else:path.write_bytes(content)
-        raise
-    finally:
-        for temp in staged.values():temp.unlink(missing_ok=True)
+def compact(value):
+    return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+
+
+def payload_files(target, payload, snapshots=True):
+    """web/family-data.js (file:// viewing) and, for a site, data/tree*.json."""
+    target = Path(target)
+    files = {target / OFFLINE_SNAPSHOT: 'window.GENEALOGY = ' + compact(payload).replace('<', '\\u003c') + ';\n'}
+    if snapshots:
+        files[target / 'data/tree.json'] = compact({k: v for k, v in payload.items() if k != 'translations'}) + '\n'
+        files.update({target / f'data/tree.{lang}.json': compact(value) + '\n' for lang, value in language_payloads(payload).items()})
+    return files
+
+
+def write_payload(target, payload, snapshots=True):
+    family_store.atomic_write(payload_files(target, payload, snapshots))
 
 
 if __name__ == '__main__':
-    root = Path(__file__).resolve().parents[1]
     from init_example import initialize_example
-    initialize_example(root)
-    payload = build_payload(root)
-    write_payload(root, payload)
-    print(f"HTML data refreshed: {len(payload['nodes'])} people, {len(payload['thumbnails'])} portraits, {payload['generations']} generations. No PDF generated.")
+    initialize_example(ROOT)
+    payload = build_payload(ROOT)
+    write_payload(ROOT, payload, snapshots=False)
+    print(f"Offline snapshot refreshed: {len(payload['nodes'])} people, {len(payload['thumbnails'])} portraits, {payload['generations']} generations. No PDF generated.")

@@ -1,4 +1,4 @@
-"""Local-only editor; all data and portraits stay in the project directory."""
+"""Local-only editor (127.0.0.1); records and portraits are saved in Data/."""
 import argparse
 import base64
 import copy
@@ -10,23 +10,21 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 import json
 from pathlib import Path
+import posixpath
 import secrets
+import shutil
 import threading
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 import webbrowser
 from zoneinfo import ZoneInfo
 from PIL import Image
-from build_html import build_payload, write_payload
-from tree_json import FIELDS, load_translations, merge_translation, translation_digest
+import family_store
+from family_store import FIELDS
+from build_html import build_payload, compact, payload_files, write_payload
+from tree_json import JSON_FILES, language_payloads, merge_translation, translation_digest
 from editor_validation import validate_document
 
 MAX_BODY = 38 * 1024 * 1024
-
-
-def atomic_json(path, data):
-    temp = path.with_suffix(path.suffix+'.tmp')
-    temp.write_text(json.dumps(data, ensure_ascii=False, indent=2)+'\n')
-    temp.replace(path)
 
 
 class EditorHandler(SimpleHTTPRequestHandler):
@@ -53,19 +51,44 @@ class EditorHandler(SimpleHTTPRequestHandler):
         origin = self.headers.get('Origin')
         return origin is None or origin in {f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}'}
 
+    def current_payload(self):
+        """Rebuild when Data/Information was changed outside the editor."""
+        data = family_store.load_data(self.root)
+        translations = family_store.load_translations(self.root, data)
+        payload = self.server.payload
+        if (hashlib.sha256(family_store.dumps(data).encode()).hexdigest() != payload['sourceSha256']
+                or translation_digest(translations) != payload['translationSha256']):
+            payload = self.server.payload = build_payload(self.root, data, translations=translations)
+            write_payload(self.root, payload, snapshots=False)
+        return payload
+
+    def send_bytes(self, raw, content_type):
+        self.send_response(200)
+        self.send_header('Content-Type', content_type)
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Length', str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
     def do_GET(self):
         if not self.allowed_origin():
             return self.json_response(403, {'error': 'Niedozwolone źródło żądania.'})
-        if urlparse(self.path).path == '/api/state':
+        path = posixpath.normpath(unquote(urlparse(self.path).path))
+        if path == '/api/state':
             with self.server.edit_lock:
-                current_hash = hashlib.sha256((self.root/'family-tree.json').read_bytes()).hexdigest()
-                if current_hash != self.server.payload['sourceSha256'] or translation_digest(load_translations(self.root)) != self.server.payload.get('translationSha256'):
-                    self.server.payload = build_payload(self.root)
-                    write_payload(self.root, self.server.payload)
-                payload = self.server.payload
-                return self.json_response(200, {'state': payload, 'token': self.server.edit_token})
-        # Backups are for recovery, not browser navigation.
-        if urlparse(self.path).path.startswith('/backups/'):
+                return self.json_response(200, {'state': self.current_payload(), 'token': self.server.edit_token})
+        if path.lstrip('/') in JSON_FILES:
+            # The same snapshot files the site serves, generated from memory: Data/ is the only store.
+            with self.server.edit_lock:
+                payload = self.current_payload()
+            name = path.lstrip('/')
+            value = ({k: v for k, v in payload.items() if k != 'translations'} if name == 'data/tree.json'
+                     else language_payloads(payload)[name.removeprefix('data/tree.').removesuffix('.json')])
+            return self.send_bytes((compact(value) + '\n').encode(), 'application/json; charset=utf-8')
+        if path.startswith('/photos/'):
+            self.path = '/' + (family_store.PHOTOS / path.removeprefix('/photos/')).as_posix()
+        elif path.lower().startswith('/data/') or '/.' in path:
+            # Records, backups and source documents are not browsed; photos go through /photos/.
             return self.json_response(404, {'error': 'Nie znaleziono.'})
         super().do_GET()
 
@@ -90,12 +113,9 @@ class EditorHandler(SimpleHTTPRequestHandler):
             return self.json_response(500, {'error': 'Nie udało się zapisać zmian. Oryginalne dane zachowano; spróbuj ponownie.'})
 
     def save_person(self, request):
-        translations_path=self.root/'family-translations.json'
-        translations=load_translations(self.root)
-        data_path = self.root/'family-tree.json'
-        review_path = self.root/'family-tree-review.json'
-        data = json.loads(data_path.read_text())
-        review = json.loads(review_path.read_text())
+        data = family_store.load_data(self.root)
+        translations = family_store.load_translations(self.root, data)
+        review = family_store.load_review(self.root)
         by_id = {p['id']: p for p in data['people']}
         person = copy.deepcopy(request['person'])
         pid = person['id']
@@ -158,9 +178,8 @@ class EditorHandler(SimpleHTTPRequestHandler):
         data['relationships'] = [replacements.get(r['id'], r) for r in data['relationships']
                                  if pid not in r['personIds'] or r['id'] in replacements]
         data['relationships'].extend(r for r in marriages if r['id'] not in original_ids)
-        schema = json.loads((self.root/'family-tree.schema.json').read_text())
-        validate_document(data, schema)
-        if person['photo'] and not photo_bytes and not (self.root/person['photo']).is_file():
+        validate_document(data, family_store.read_json(family_store.schema_path(self.root)))
+        if person['photo'] and not photo_bytes and not family_store.photo_file(self.root, person['photo']).is_file():
             raise ValueError('Nie znaleziono pliku zdjęcia.')
         now = datetime.now(ZoneInfo('Europe/Warsaw'))
         review.setdefault('editorHistory', []).append({'personId': pid, 'savedAt': now.isoformat(),
@@ -171,45 +190,40 @@ class EditorHandler(SimpleHTTPRequestHandler):
         review['renderStatus']['pendingPersonIds'] = sorted(set(review['renderStatus'].get('pendingPersonIds', [])) | {pid})
         review['missingParents'] = [{'personId': p['id'], 'MommyMissing': p['Mommy'] is None, 'DaddyMissing': p['Daddy'] is None}
                                    for p in data['people'] if p['Mommy'] is None or p['Daddy'] is None]
-        photo_target = self.root/new_photo if new_photo else None
+        photo_target = family_store.photo_file(self.root, new_photo) if new_photo else None
         photo_existed = photo_target and photo_target.exists()
         try:
             if photo_target:
+                photo_target.parent.mkdir(parents=True, exist_ok=True)
                 photo_target.write_bytes(photo_bytes)
             try:
-                payload = build_payload(self.root, data, review)
+                payload = build_payload(self.root, data, review, translations)
             except AssertionError:
                 raise ValueError('Powiązania wskazują sprzeczne pokolenia. Sprawdź rodziców, rodzeństwo i małżeństwa.')
-            payload['translations']=translations
-            payload['translationSha256']=hashlib.sha256(json.dumps(translations,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
             review['disconnectedPeople'] = payload['disconnectedPeople']
             review['summary']['allPeopleConnectedToRoot'] = not payload['disconnectedPeople']
-            backup = self.root/'backups/editor'/now.strftime('%Y%m%d-%H%M%S-%f')
-            backup.mkdir(parents=True)
-            translations_before=translations_path.read_bytes() if translations_path.exists() else None
-            if translations_before is not None:(backup/'family-translations.json').write_bytes(translations_before)
-            (backup/'family-tree.json').write_bytes(data_path.read_bytes())
-            (backup/'family-tree-review.json').write_bytes(review_path.read_bytes())
             review['htmlStatus'].update(status='aktualny', sourceSha256=payload['sourceSha256'],
                 portraitCount=len(payload['thumbnails']), updatedOn=now.date().isoformat())
-            atomic_json(data_path, data)
-            try:
-                atomic_json(review_path, review)
-                if entry:atomic_json(translations_path,translations)
-                write_payload(self.root, payload)
-            except Exception:
-                data_path.write_bytes((backup/'family-tree.json').read_bytes())
-                review_path.write_bytes((backup/'family-tree-review.json').read_bytes())
-                if entry:
-                    if translations_before is None:translations_path.unlink(missing_ok=True)
-                    else:translations_path.write_bytes(translations_before)
-                raise
+            self.backup(now)
+            files = {family_store.information_path(self.root, lang): family_store.dumps(document)
+                     for lang, document in family_store.information_documents(data, translations).items()}
+            files[family_store.review_path(self.root)] = family_store.dumps(review)
+            files.update(payload_files(self.root, payload, snapshots=False))
+            family_store.atomic_write(files)  # all files or none
             self.server.payload = payload
             return payload
         except Exception:
             if photo_target and not photo_existed:
                 photo_target.unlink(missing_ok=True)
             raise
+
+    def backup(self, now):
+        target = self.root/family_store.BACKUPS/'editor'/now.strftime('%Y%m%d-%H%M%S-%f')
+        target.mkdir(parents=True)
+        for source in [*(family_store.information_path(self.root, lang) for lang in family_store.LANGUAGES),
+                       family_store.review_path(self.root)]:
+            if source.exists():
+                shutil.copy2(source, target/source.name)
 
 
 class Conflict(ValueError):
@@ -230,10 +244,10 @@ def main():
     server.edit_lock = threading.Lock()
     server.edit_token = secrets.token_urlsafe(32)
     server.payload = build_payload(args.root)
-    write_payload(args.root, server.payload)
+    write_payload(args.root, server.payload, snapshots=False)
     url = f'http://127.0.0.1:{server.server_port}/'
     print(f'Edytor drzewa: {url}', flush=True)
-    print('Zmiany i zdjęcia zapisują się w folderze projektu. Zatrzymanie: Ctrl+C.', flush=True)
+    print('Zmiany zapisują się w Data/Information, zdjęcia w Data/Photos. Zatrzymanie: Ctrl+C.', flush=True)
     if not args.no_browser:
         webbrowser.open(url)
     try:

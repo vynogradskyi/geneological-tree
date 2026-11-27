@@ -5,22 +5,10 @@ main { display:flex; flex-direction:column; flex:1; min-height:0; }
 .viewport { flex:1; min-height:0; height:auto; overflow:clip; }
 #open-mobile-menu { flex-shrink:0; min-height:44px; }
 .mobile-menu { width:min(460px,calc(100vw - 24px)); }
-.mobile-menu-body .layout-toolbar { display:flex; flex-direction:column; align-items:stretch; padding:0; gap:16px; }
-.mobile-menu-body .layout-mode { display:flex; flex-direction:column; align-items:stretch; }
-.mobile-menu-body .layout-history { display:flex; flex-wrap:wrap; }
-.mobile-menu-body .layout-toolbar button { min-height:44px; white-space:normal; }
-.mobile-menu-body .layout-backup { padding:0; border:0; border-radius:0; }
 .mobile-menu-body .editor-status { margin:0; padding:0; border:0; background:transparent; flex-direction:column; align-items:stretch; gap:12px; font-size:14px; line-height:1.5; }
 .mobile-menu-body .editor-status>div { display:flex; flex-wrap:wrap; gap:8px; }
 .mobile-menu-body .editor-status button { min-height:44px; }
 .mobile-menu-body .page-footer { display:block; padding:0; font-size:12px; line-height:1.5; }
 .mobile-menu-body .page-footer>p { margin-top:16px; white-space:normal; }
 .viewport .map-hint { display:none; }
-#mobile-layout-exit:not([hidden]),.mobile-view #mobile-layout-exit:not([hidden]) {
-  display:block; position:absolute; z-index:6; top:12px; right:12px; left:auto;
-  transform:none; max-width:calc(100% - var(--generation-gutter) - 24px);
-  min-height:44px; font-size:13px; background:var(--green); color:white;
-  border:0; box-shadow:0 2px 16px #17351e25;
-}
-.mobile-view #menu-layout .layout-toolbar { display:flex; }
 @media(max-height:500px) { .page-header { padding-block:12px; } }

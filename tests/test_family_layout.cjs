@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const context={window:{},structuredClone};vm.createContext(context);
-for(const name of ['card-metrics','line-routing','family-layout','card-layout'])vm.runInContext(fs.readFileSync(`web/${name}.js`,'utf8'),context);
+for(const name of ['card-metrics','line-routing','family-layout'])vm.runInContext(fs.readFileSync(`web/${name}.js`,'utf8'),context);
 const create=context.window.GenealogyFamilyLayout.create;
 const person=(id,Mommy=null,Daddy=null,siblings=[])=>({id,Mommy,Daddy,siblings,photo:null});
 const relationship=(id,a,b,status=null)=>({id,personIds:[a,b],status,previousRelationshipId:null});
@@ -31,9 +31,7 @@ for(const id of ['sister','cousin','uncle'])assert(layout.nodes[id].x>=area.left
 const remarried={rootPersonId:'child',people:[person('child','mother','ex'),person('mother',null,null,['sister']),person('sister',null,null,['mother']),person('current'),person('ex'),person('sibling-child','sister',null)],relationships:[relationship('old','mother','ex','rozwiedzeni'),relationship('new','mother','current','trwa')]};
 layout=check(remarried);assert(Math.abs(layout.nodes.mother.x-layout.nodes.sister.x)<Math.abs(layout.nodes.mother.x-layout.nodes.ex.x));
 assert.equal(layout.layoutPolicy.pairs.length,1);
-const moved=context.window.GenealogyCardLayout.constrained(layout.nodes,layout.layoutPolicy,'mother',-10000);
-assert.equal(moved.current-layout.nodes.current.x,moved.mother-layout.nodes.mother.x,'Move current couple together');
-for(const id of ['ex','sister'])assert.equal(moved[id],layout.nodes[id].x);
+assert.deepEqual([...layout.layoutPolicy.pairs[0]].sort(),['current','mother'],'Only the current couple is a pair');
 remarried.relationships[1].status=null;layout=check(remarried);assert.equal(layout.layoutPolicy.pairs.length,0,'Unknown marriage is not current');
 for(const role of ['Mommy','Daddy']){
  const chain={rootPersonId:'youngest',people:[person('youngest'),person('middle'),person('oldest')],relationships:[]};

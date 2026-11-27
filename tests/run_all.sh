@@ -3,7 +3,9 @@
 set -e
 cd "$(dirname "$0")/.."
 PY="${PYTHON:-.venv/bin/python}"; [ -x "$PY" ] || PY=python3
-echo "== Node: логика просмотрщика, раскладка, языки, контракты, эталон дерева"; node tests/test_card_layout.cjs
+mkdir -p tmp
+echo "== Node: логика просмотрщика, раскладка, языки, контракты, эталон дерева"; node tests/check_viewer.cjs
+echo "== Хранилище Data/Information"; "$PY" tests/test_family_store.py
 echo "== Сборка для Firebase"; "$PY" tests/test_hosted_build.py
 echo "== Локальный редактор"; "$PY" tests/test_editor.py
 echo "== Браузерные тесты (синтетические данные)"; "$PY" tests/test_e2e.py

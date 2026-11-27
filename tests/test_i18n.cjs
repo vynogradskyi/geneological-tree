@@ -5,7 +5,7 @@ const context={window:{GENEALOGY_LOCALES:dictionaries},localStorage:{getItem:()=
 vm.createContext(context);vm.runInContext(fs.readFileSync('web/i18n.js','utf8'),context);
 (async()=>{
  const I=context.window.GenealogyI18n;await I.ready;
- assert.equal(I.t('Jestem z rodziny'),"I'm family");
+ assert.equal(I.t('Pobierz PDF'),'Download PDF');
  assert.equal(I.translate('z domu Test'),'née Test');
  const raw={id:'person_0001',notes:'tekst polski',firstName:'Approved',Mommy:'person_0002',birthDate:'1989'};
  const state={translations:{en:{people:{person_0001:{source:{notes:raw.notes},values:{notes:'English note',Mommy:'forbidden'}}}}}};

@@ -9,7 +9,6 @@ Requires: pip install playwright pillow; a Chrome/Chromium
 (system Google Chrome is used when present, otherwise `python3 -m playwright install chromium`).
 E2E_HEADED=1 shows the browser window.
 """
-import json
 import os
 from pathlib import Path
 import sys
@@ -17,7 +16,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from e2e_site import build_site, serve, TEST_LOGIN, TEST_PASSWORD
+from e2e_site import build_site, serve
 
 try:
     from playwright.sync_api import sync_playwright, expect
@@ -82,7 +81,10 @@ class Page:
         self.page.on('pageerror', lambda error: self.errors.append(str(error)))
         self.page.on('console', lambda msg: msg.type == 'error' and 'favicon' not in msg.text
                      and 'Failed to load resource' not in msg.text and self.errors.append(msg.text))
+        # On 127.0.0.1 the viewer probes the local editor server (web/editor-storage.js); the static
+        # test server answers 404 and the page falls back to read-only, as the published site does.
         self.page.on('response', lambda r: r.status >= 400 and not r.url.endswith('favicon.ico')
+                     and not (r.status == 404 and r.url == URL + 'api/state')
                      and self.errors.append(f'HTTP {r.status} {r.url}'))
 
     def open(self, path=''):
@@ -151,7 +153,8 @@ class LoadAndTree(E2ETestCase):
         expect(self.page.locator('#summary')).to_have_text('12 osób · 3 pokolenia')
         expect(self.page.locator('#author-name')).to_have_text('Zofia Testowa')
         expect(self.page.locator('#save-mode')).to_have_text('Wersja tylko do odczytu')
-        expect(self.page.locator('#family-login')).to_be_visible()
+        for removed in ('#family-login', '#edit-person', '#toggle-card-drag', '#download-changes'):
+            expect(self.page.locator(removed)).to_have_count(0)  # read-only viewer: no login, editing or card moving
         expect(self.page.locator('#download-pdf')).to_be_visible()
         expect(self.page.locator('#go-root')).to_have_text('Zofia')
         self.assertFalse(self.page.evaluate('document.body.classList.contains("mobile-view")'), 'Десктоп не в мобильном режиме')
@@ -322,8 +325,7 @@ class Details(E2ETestCase):
 
     def test_TC_DET_09_guest_cannot_edit(self):
         self.ui.open_details(FATHER)
-        expect(self.page.locator('#edit-person')).to_be_hidden()
-        expect(self.page.locator('#download-changes')).to_be_hidden()
+        expect(self.page.locator('#edit-person')).to_have_count(0)
 
 
 class Search(E2ETestCase):
@@ -459,49 +461,19 @@ class Navigation(E2ETestCase):
 
 
 class CardLayout(E2ETestCase):
-    def test_TC_LAY_01_drag_card_undo_redo_reset_persist(self):
-        self.page.click('#open-mobile-menu')
-        self.page.click('summary:has-text("Układ kart")')
-        self.page.click('#toggle-card-drag')
-        expect(self.page.locator('#toggle-card-drag')).to_have_attribute('aria-pressed', 'true')
-        expect(self.page.locator('#mobile-layout-exit')).to_be_visible()
+    def test_TC_LAY_01_dragging_a_card_pans_without_moving_it(self):
         start = self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft')
         self.ui.fit()
-        box = self.ui.card(ROOT_ID).bounding_box()
-        x, y = box['x'] + box['width'] / 2, box['y'] + box['height'] / 2
-        self.page.mouse.move(x, y)
-        self.page.mouse.down()
-        self.page.mouse.move(x - 60, y, steps=10)
-        self.page.mouse.up()
-        moved = self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft')
-        self.assertLess(moved, start, 'Карточка сдвинулась влево в пределах своей семьи')
-        self.assertFalse(self.ui.dialog_open(), 'Перетаскивание не открывает карточку')
-        self.assertEqual(self.ui.selected(), [])
-        self.page.reload()
-        self.page.wait_for_selector('.person-node')
-        self.assertEqual(self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft'), moved,
-                         'Личная расстановка сохраняется после перезагрузки')
-        self.page.click('#open-mobile-menu')
-        self.page.click('summary:has-text("Układ kart")')
-        expect(self.page.locator('#reset-layout')).to_be_enabled()
-        self.page.click('#reset-layout')
-        self.assertEqual(self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft'), start)
-        self.page.click('#undo-layout')
-        self.assertEqual(self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft'), moved)
-        self.page.click('#redo-layout')
-        self.assertEqual(self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft'), start)
-
-    def test_TC_LAY_02_drag_mode_off_by_default(self):
-        expect(self.page.locator('#toggle-card-drag')).to_have_attribute('aria-pressed', 'false')
-        expect(self.page.locator('#mobile-layout-exit')).to_be_hidden()
-        start = self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft')
-        self.ui.fit()
+        before = self.ui.transform()
         box = self.ui.card(ROOT_ID).bounding_box()
         self.page.mouse.move(box['x'] + 40, box['y'] + 40)
         self.page.mouse.down()
         self.page.mouse.move(box['x'] - 60, box['y'] + 40, steps=8)
         self.page.mouse.up()
-        self.assertEqual(self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft'), start)
+        self.assertEqual(self.page.evaluate(f'document.querySelector("[data-person={ROOT_ID}]").offsetLeft'), start,
+                         'Карточки не перемещаются, перетаскивание двигает дерево')
+        self.assertNotEqual(self.ui.transform(), before)
+        self.assertFalse(self.ui.dialog_open(), 'Перетаскивание не открывает карточку')
 
 
 class Pdf(E2ETestCase):
@@ -515,64 +487,6 @@ class Pdf(E2ETestCase):
         self.assertTrue(content.startswith(b'%PDF'))
         self.assertGreater(len(content), 10000)
         expect(self.page.locator('#download-pdf')).to_be_enabled()
-
-
-class FamilyLogin(E2ETestCase):
-    def login(self, password):
-        self.page.click('#family-login')
-        self.page.fill('#family-username', TEST_LOGIN)
-        self.page.fill('#family-login-form input[name=password]', password)
-        self.page.click('#family-submit')
-
-    def test_TC_FAM_01_wrong_password_rejected(self):
-        self.login('wrong-password')
-        expect(self.page.locator('#family-login-error')).to_have_text('Nieprawidłowy login lub hasło.')
-        self.assertTrue(self.ui.dialog_open('family-dialog'))
-        self.assertEqual(self.page.input_value('#family-login-form input[name=password]'), '')
-
-    def test_TC_FAM_02_login_session_and_logout(self):
-        self.login(TEST_PASSWORD)
-        expect(self.page.locator('#family-greeting')).to_have_text('Witaj, Test Rodzina')
-        expect(self.page.locator('#family-logout')).to_be_visible()
-        expect(self.page.locator('#family-login')).to_be_hidden()
-        self.assertFalse(self.ui.dialog_open('family-dialog'))
-        self.page.reload()
-        self.page.wait_for_selector('.person-node')
-        expect(self.page.locator('#family-greeting')).to_have_text('Witaj, Test Rodzina')
-        self.page.click('#family-logout')
-        expect(self.page.locator('#family-login')).to_be_visible()
-        expect(self.page.locator('#save-mode')).to_have_text('Wersja tylko do odczytu')
-
-    def test_TC_FAM_03_family_edit_stays_in_browser(self):
-        self.login(TEST_PASSWORD)
-        expect(self.page.locator('#save-mode')).to_contain_text('tylko w tej przeglądarce')
-        self.ui.open_details(FATHER)
-        expect(self.page.locator('#edit-person')).to_be_visible()
-        self.page.click('#edit-person')
-        self.page.fill('#person-edit-form textarea[name=notes]', 'Notatka dodana w teście QA')
-        self.page.click('#save-person')
-        expect(self.page.locator('#person-details .notes')).to_have_text('Notatka dodana w teście QA')
-        self.page.reload()
-        self.page.wait_for_selector('.person-node')
-        details = self.ui.open_details(FATHER)
-        expect(details.locator('.notes')).to_have_text('Notatka dodana w teście QA')
-        # A second visitor (fresh browser profile) still sees the published data.
-        other = Page().open()
-        try:
-            other_details = other.open_details(FATHER)
-            expect(other_details.locator('.notes')).to_have_count(0)
-        finally:
-            other.close()
-
-    def test_TC_FAM_04_edit_validation(self):
-        self.login(TEST_PASSWORD)
-        self.ui.open_details(FATHER)
-        self.page.click('#edit-person')
-        self.page.fill('#person-edit-form input[name=birthDate]', '1980-02-30')
-        self.page.click('#save-person')
-        expect(self.page.locator('#edit-error')).to_have_text('Nieprawidłowa data w kalendarzu.')
-        self.page.click('#cancel-edit')
-        expect(self.page.locator('#person-details .hero-life')).to_have_text('1980 – ...')
 
 
 class Phone(E2ETestCase):
@@ -589,7 +503,7 @@ class Phone(E2ETestCase):
         self.page.click('#open-mobile-menu')
         self.assertTrue(self.ui.dialog_open('mobile-menu'))
         menu = self.page.locator('#mobile-menu')
-        for selector in ('#language-select', '#family-login', '#download-pdf', '#open-mobile-search'):
+        for selector in ('#language-select', '#download-pdf', '#open-mobile-search'):
             expect(menu.locator(selector)).to_be_visible()
         self.page.click('#close-mobile-menu')
         self.assertFalse(self.ui.dialog_open('mobile-menu'))

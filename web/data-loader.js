@@ -11,7 +11,6 @@ window.GENEALOGY_READY = (async () => {
       }
       return state;
     }
-    if(document.documentElement.dataset.familyPrototype==='true')throw Error('Nie udało się wczytać danych drzewa.');
   }
   return new Promise((resolve,reject)=>{
     function load(path,fallback){const script=document.createElement('script');script.src=path;script.onload=()=>window.GENEALOGY?.data?resolve(window.GENEALOGY):fallback();script.onerror=fallback;document.head.append(script);}
