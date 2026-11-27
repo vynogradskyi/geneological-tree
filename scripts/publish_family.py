@@ -9,7 +9,7 @@ from build_readonly import build_readonly
 from build_hosted import build_hosted, download
 from build_html import write_payload
 from readonly_assets import write_manifest
-from family_store import load_translations
+from family_store import TRANSLATED, load_translations
 from tree_json import read_json_payload, merge_translation, translation_digest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +25,7 @@ def build_translation_update(root=ROOT, fetch=download):
     issues={issue['id']:issue.get('question',issue.get('topic')) for issue in payload.get('issues',[])}
     updated=0;skipped=0
     for lang,local in load_translations(root).items():
-        if lang not in ('ru','en'):continue
+        if lang not in TRANSLATED:continue
         for pid,entry in local.get('people',{}).items():
             if pid not in people:skipped+=1;continue
             values={key:value for key,value in entry['values'].items() if key in entry['source'] and entry['source'][key]==people[pid].get(key)}

@@ -74,7 +74,7 @@ class EditorPersistenceTest(unittest.TestCase):
         state=self.handler.save_person(req);saved=next(p for p in self.data()['people'] if p['id']=='person_0055')
         self.assertEqual(saved['firstName'],'Osoba Testowa');self.assertEqual(saved['birthDate'],'1975-02-12');self.assertEqual(family_store.photo_file(self.root,saved['photo']).read_bytes(),photo)
         self.assertTrue(list((self.root/family_store.BACKUPS/'editor').glob('*/family-tree.pl.json')))
-        for lang in ('ru','en'):
+        for lang in ('ru','en','uk'):
             copy_=json.loads(family_store.information_path(self.root,lang).read_text())
             self.assertEqual(next(p for p in copy_['people'] if p['id']=='person_0055')['birthDate'],'1975-02-12','Language copies follow the Polish facts')
         # Compare names exactly: on case-insensitive file systems (macOS) 'data' would match 'Data'.
@@ -133,7 +133,7 @@ class EditorPersistenceTest(unittest.TestCase):
             canonical={'id':'synthetic','photo':'photos/synthetic.jpg','notes':'Current Polish note'}
             payload={'data':{'people':[canonical]},'nodes':{'synthetic':{'x':1}},'thumbnails':{'synthetic':'synthetic-thumbnail'},'issues':[],'isExample':False}
             files={DATA_FILE:('window.GENEALOGY = '+json.dumps(payload)+';\n').encode(),'data/tree.json':json.dumps(payload).encode(),
-                   **{f'data/tree.{lang}.json':json.dumps({'language':lang,'people':{},'issues':{}}).encode() for lang in ('pl','ru','en')},
+                   **{f'data/tree.{lang}.json':json.dumps({'language':lang,'people':{},'issues':{}}).encode() for lang in ('pl','ru','en','uk')},
                    'photos/synthetic.jpg':b'synthetic original photo'}
             manifest={'version':2,'files':{name:hashlib.sha256(value).hexdigest() for name,value in files.items()}}
             local={'rootPersonId':'synthetic','relationships':[],'people':[dict(canonical,notes='Earlier Polish note')]}

@@ -133,7 +133,7 @@ class EditorHandler(SimpleHTTPRequestHandler):
             if translations.get(lang,{}).get('people',{}).get(pid)!=request.get('baseTranslation'):
                 raise Conflict('Dane zmieniły się w innym oknie. Odśwież stronę przed zapisaniem.')
             source={key:original.get(key) for key in FIELDS}
-            if lang not in ('ru','en') or entry.get('source')!=source or not isinstance(entry.get('values'),dict) or not set(entry['values'])<=set(FIELDS):
+            if lang not in family_store.TRANSLATED or entry.get('source')!=source or not isinstance(entry.get('values'),dict) or not set(entry['values'])<=set(FIELDS):
                 raise ValueError('Nieprawidłowe tłumaczenie.')
             merge_translation(translations,pid,entry)
         photo_bytes = None

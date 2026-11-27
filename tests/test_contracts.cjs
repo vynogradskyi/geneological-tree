@@ -3,7 +3,7 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.join(__dirname,'..'),read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const html=read('index.html'),assets=read('scripts/readonly_assets.py');
-const locales=Object.fromEntries(['pl','ru','en'].map(l=>[l,JSON.parse(read(`locales/${l}.json`))]));
+const locales=Object.fromEntries(['pl','ru','en','uk'].map(l=>[l,JSON.parse(read(`locales/${l}.json`))]));
 const generated=new Set(['web/family-data.js','web/example-data.js','web/card-metrics.js','web/locale-bundle.js']);
 const webFiles=fs.readdirSync(path.join(root,'web')).filter(f=>f.endsWith('.js')&&!generated.has('web/'+f));
 const code=webFiles.map(f=>read('web/'+f)).join('\n');
@@ -26,7 +26,7 @@ const duplicates=[...html.matchAll(/\sid="([^"]+)"/g)].map(m=>m[1]).filter((id,i
 assert.deepEqual(duplicates,[],'Element ids in index.html are unique');
 
 // 3. Locales have identical keys, non-empty values and keep {placeholders}.
-for(const lang of ['ru','en']){
+for(const lang of ['ru','en','uk']){
  assert.deepEqual(Object.keys(locales[lang]).sort(),Object.keys(locales.pl).sort(),`${lang}.json keys equal pl.json`);
  for(const [key,value] of Object.entries(locales[lang])){
   assert(typeof value==='string'&&value.trim(),`${lang}: empty translation for "${key}"`);
@@ -39,9 +39,9 @@ const literals=new Set([...code.matchAll(/\bt\(\s*'((?:[^'\\]|\\.)*)'/g)].map(m=
 assert(literals.size>=20);
 const page=html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g,'');
 const texts=new Set([...page.matchAll(/>([^<>]+)</g)].map(m=>m[1].trim()).concat([...page.matchAll(/\s(?:aria-label|placeholder|title)="([^"]+)"/g)].map(m=>m[1].trim())));
-const untranslatable=new Set(['Polski','Русский','English','PL','RU','EN','100%']);
+const untranslatable=new Set(['Polski','Русский','English','Українська','PL','RU','EN','UK','100%']);
 for(const text of [...literals,...texts].filter(s=>/\p{L}/u.test(s)&&!untranslatable.has(s)))
- for(const lang of ['ru','en'])assert(Object.hasOwn(locales[lang],text),`${lang}.json has no translation for "${text}"`);
+ for(const lang of ['ru','en','uk'])assert(Object.hasOwn(locales[lang],text),`${lang}.json has no translation for "${text}"`);
 // 5. The bundled offline locales equal the JSON files (file:// mode uses the bundle).
 const bundle={window:{}};require('node:vm').runInNewContext(read('web/locale-bundle.js'),bundle);
 assert.deepEqual(JSON.parse(JSON.stringify(bundle.window.GENEALOGY_LOCALES)),locales,'web/locale-bundle.js is stale — rebuild it with scripts/build_locales.py');

@@ -7,7 +7,7 @@ import shutil
 
 ASSETS = (
     'web/styles.css', 'web/responsive.css', 'web/viewer-shell.css', 'web/branch-colors.css', 'web/branch-colors.js', 'web/family-fields.js', 'web/source-info.js', 'web/lineage.js', 'web/app.js', 'web/dates.js', 'web/data-loader.js',
-    'web/responsive.js', 'web/generation-scale.js', 'web/generation-scale.css', 'web/i18n.js', 'web/locale-bundle.js', 'locales/pl.json', 'locales/ru.json', 'locales/en.json',
+    'web/responsive.js', 'web/generation-scale.js', 'web/generation-scale.css', 'web/i18n.js', 'web/locale-bundle.js', 'locales/pl.json', 'locales/ru.json', 'locales/en.json', 'locales/uk.json',
     'web/line-routing.js', 'web/family-layout.js', 'web/card-metrics.js', 'web/card-view.js', 'web/editor-storage.js', 'web/editor.js',
     'web/vendor/pdf-lib.min.js', 'web/vendor/pdf-lib-LICENSE.md',
 )

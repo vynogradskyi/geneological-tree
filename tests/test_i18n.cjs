@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const dictionaries=Object.fromEntries(['pl','ru','en'].map(l=>[l,JSON.parse(fs.readFileSync(`locales/${l}.json`))]));
-for(const lang of ['ru','en'])assert.deepEqual(Object.keys(dictionaries[lang]).sort(),Object.keys(dictionaries.pl).sort());
+const dictionaries=Object.fromEntries(['pl','ru','en','uk'].map(l=>[l,JSON.parse(fs.readFileSync(`locales/${l}.json`))]));
+for(const lang of ['ru','en','uk'])assert.deepEqual(Object.keys(dictionaries[lang]).sort(),Object.keys(dictionaries.pl).sort());
 const context={window:{GENEALOGY_LOCALES:dictionaries},localStorage:{getItem:()=> 'en',setItem(){}},location:{protocol:'file:'},document:{documentElement:{},body:{querySelectorAll:()=>[]},createTreeWalker:()=>({nextNode:()=>null})},NodeFilter:{SHOW_TEXT:4},structuredClone};
 vm.createContext(context);vm.runInContext(fs.readFileSync('web/i18n.js','utf8'),context);
 (async()=>{

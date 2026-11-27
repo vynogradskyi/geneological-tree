@@ -4,7 +4,7 @@ window.GENEALOGY_READY = (async () => {
     const response=await fetch('data/tree.json',{cache:'no-store'});
     if(response.ok){
       const state=await response.json();state.translations={};
-      for(const lang of ['pl','ru','en']){
+      for(const lang of ['pl','ru','en','uk']){
         const localized=await fetch(`data/tree.${lang}.json`,{cache:'no-store'});
         if(!localized.ok)throw Error('Missing tree translation: '+lang);
         state.translations[lang]=await localized.json();

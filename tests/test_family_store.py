@@ -33,7 +33,8 @@ class FamilyStoreTest(unittest.TestCase):
         self.translations = {'ru': {'language': 'ru', 'issues': {'Q01': {'source': 'Pytanie?', 'value': 'Вопрос?'}},
                                     'people': {'person_0001': {'source': {'notes': 'Notatka po polsku.', 'firstName': 'Anna'},
                                                                'values': {'notes': 'Заметка по-русски.', 'firstName': 'Анна'}}}},
-                             'en': {'language': 'en', 'people': {}, 'issues': {}}}
+                             'en': {'language': 'en', 'people': {}, 'issues': {}},
+                             'uk': {'language': 'uk', 'people': {}, 'issues': {}}}
         family_store.save_information(self.root, self.data, self.translations)
 
     def tearDown(self):

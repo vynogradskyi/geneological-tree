@@ -4,6 +4,7 @@ Layout:
     Data/Information/family-tree.pl.json   canonical records (Polish); facts, links, dates, photos
     Data/Information/family-tree.ru.json   full Russian copy of the same records
     Data/Information/family-tree.en.json   full English copy of the same records
+    Data/Information/family-tree.uk.json   full Ukrainian copy of the same records
     Data/Information/family-tree.schema.json
     Data/Photos/                           portraits; records refer to them as photos/<file>
     Data/Project/                          working files: review log, display preferences
@@ -24,8 +25,8 @@ from pathlib import Path, PurePosixPath
 
 from editor_validation import validate_document
 
-LANGUAGES = ('pl', 'ru', 'en')
-TRANSLATED = ('ru', 'en')
+LANGUAGES = ('pl', 'ru', 'en', 'uk')
+TRANSLATED = ('ru', 'en', 'uk')
 FIELDS = ('firstName', 'lastName', 'maidenName', 'patronymic', 'formerLastNames', 'title', 'occupation',
           'notes', 'deathCircumstances', 'birthDateNote', 'deathDateNote', 'birthPlace', 'deathPlace')
 

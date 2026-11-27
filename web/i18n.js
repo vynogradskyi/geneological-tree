@@ -1,6 +1,6 @@
 /* One canonical tree; translated text never changes IDs, dates or family links. */
 window.GenealogyI18n = (() => {
-  const languages=['pl','ru','en'];
+  const languages=['pl','ru','en','uk'];
   const fields=['firstName','lastName','maidenName','patronymic','formerLastNames','title','occupation','notes','deathCircumstances','birthDateNote','deathDateNote','birthPlace','deathPlace'];
   let language='pl', dictionaries=window.GENEALOGY_LOCALES||{};
   try {const saved=localStorage.getItem('genealogy-language');if(languages.includes(saved))language=saved;} catch {}

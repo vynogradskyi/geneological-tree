@@ -7,7 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from family_store import FIELDS, LANGUAGES
+from family_store import FIELDS, LANGUAGES, TRANSLATED
 
 JSON_FILES={'data/tree.json',*(f'data/tree.{lang}.json' for lang in LANGUAGES)}
 
@@ -38,7 +38,7 @@ def translation_digest(translations):
 
 def merge_translation(translations,person_id,entry):
     values=entry['values']
-    if entry.get('language') not in ('ru','en') or not isinstance(values,dict) or not set(values)<=set(FIELDS):
+    if entry.get('language') not in TRANSLATED or not isinstance(values,dict) or not set(values)<=set(FIELDS):
         raise ValueError('Nieprawidłowe tłumaczenie.')
     for key,value in values.items():
         valid=(value is None or isinstance(value,str))

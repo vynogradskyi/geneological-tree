@@ -26,7 +26,7 @@ class HostedBuildTest(unittest.TestCase):
             DATA_FILE: ('window.GENEALOGY = ' + json.dumps(payload) + ';\n').encode(),
             'data/tree.json': json.dumps(payload).encode(),
             **{f'data/tree.{lang}.json': json.dumps({'language': lang, 'people': {}, 'issues': {}}).encode()
-               for lang in ('pl', 'ru', 'en')},
+               for lang in ('pl', 'ru', 'en', 'uk')},
             self.photo: b'synthetic test media - not a real family photo',
         }
         self.manifest = {'version': 2, 'files': {
