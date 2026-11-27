@@ -33,7 +33,6 @@
   "Ponów": "Redo",
   "Układ początkowy": "Initial layout",
   "Interaktywne drzewo genealogiczne": "Interactive family tree",
-  "Mysz: karta w lewo / w prawo · Tło: całe drzewo · Kliknięcie: szczegóły": "Mouse: move cards left / right · Background: pan tree · Click: details",
   "Linia ojca": "Father's branch",
   "Linia matki": "Mother's branch",
   "Małżeństwo": "Marriage",
@@ -201,7 +200,6 @@
   "Układ działa, ale przeglądarka nie mogła go zapisać na później.": "The layout works, but the browser could not save it.",
   "Przywrócono początkowy układ. Możesz cofnąć tę zmianę.": "Initial layout restored. You can undo this change.",
   "Nieprawidłowe tłumaczenie.": "Invalid translation.",
-  "Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.": "Dragging pans the tree. Click to open a card.",
   "Drzewo rodzinne": "Family tree",
   "Zamknij menu": "Close menu",
   "Zamknij wyszukiwanie": "Close search",
@@ -245,5 +243,9 @@
   "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Saved only in this browser. Changes have not been published. Download a ZIP to transfer a copy.",
   "Wyczyść podświetlenie": "Clear highlighting",
   "Podświetlenie wyczyszczone.": "Highlighting cleared.",
-  "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa.": "Dark cards highlight the selected person, their ancestors and descendants. A gold frame marks the selected person; contrasting gradients mark direct parentage lines."
+  "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa.": "Dark cards highlight the selected person, their ancestors and descendants. A gold frame marks the selected person; contrasting gradients mark direct parentage lines.",
+  "{value}. Podświetl linię rodzinną": "{value}. Highlight family line",
+  "Podświetlono linię osoby {value}. Naciśnij ciemną kartę, aby otworzyć szczegóły.": "Family line highlighted: {value}. Activate a dark card to open details.",
+  "Przeciąganie przesuwa drzewo. Jasna karta: podświetl linię. Ciemna karta: otwórz szczegóły.": "Drag to pan the tree. Light card: highlight family line. Dark card: open details.",
+  "Jasna karta: podświetl linię · Ciemna karta: szczegóły · Tło: przesuń drzewo": "Light card: highlight line · Dark card: details · Background: pan tree"
 }

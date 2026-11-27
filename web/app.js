@@ -44,12 +44,19 @@
       button.classList.toggle('selected',id===state.selected);
       button.classList.toggle('lineage-member',lineage.people.has(id));
       if(id===state.selected)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
+      const dark=lineage.people.has(id),person=people.get(id);
+      button.setAttribute('aria-label',t(dark?'{value}. Otwórz szczegóły':'{value}. Podświetl linię rodzinną',{value:`${shortName(person)}, ${life(display(person))}`}));
+      if(dark)button.setAttribute('aria-haspopup','dialog');else button.removeAttribute('aria-haspopup');
     }
     svg.querySelectorAll('[data-edge-index]').forEach(path=>path.classList.toggle('lineage-link',lineage.edges.has(+path.dataset.edgeIndex)));
     GenealogyLineage.paint(svg,G.edges,lineage);
     $('lineage-controls').hidden=!state.selected;
   }
   function selectPerson(id){state.selected=id;paintLineage();}
+  function highlightPerson(id){
+    selectPerson(id);
+    $('announcer').textContent=t('Podświetlono linię osoby {value}. Naciśnij ciemną kartę, aby otworzyć szczegóły.',{value:fullName(people.get(id))});
+  }
   $('clear-lineage').onclick=()=>{const old=state.selected;selectPerson(null);$('announcer').textContent=t('Podświetlenie wyczyszczone.');personButtons.get(old)?.focus({preventScroll:true});};
   document.addEventListener('keydown',event=>{
     if(event.key==='Escape'&&!event.defaultPrevented&&!document.querySelector('dialog[open]')&&!drag){
@@ -100,12 +107,11 @@
     button.type='button';button.className=`person-node branch-${G.branches[p.id]}`;button.dataset.person=p.id;
     Object.assign(button.style,{left:pos.x+'px',top:pos.y+'px',width:pos.w+'px',height:pos.h+'px'});button.classList.toggle('selected',state.selected===p.id);
     const theme=colors.people[p.id];button.style.setProperty('--branch-color',theme.color);button.style.setProperty('--branch-tint',theme.tint);button.style.setProperty('--branch-band',`linear-gradient(90deg,${theme.bands[0]} 0 50%,${theme.bands[1]} 50% 100%)`);
-    button.setAttribute('aria-label',`${shortName(p)}, ${life(p)}. Otwórz szczegóły`);
     const initials=[p.firstName?.[0],p.lastName?.[0]].filter(Boolean).join('') || '?';
     const image=G.thumbnails[p.id] ? `<img class="node-photo" src="${G.thumbnails[p.id]}" alt="" draggable="false">` : `<span class="node-photo node-placeholder"><b>${esc(initials)}</b><span>brak zdjęcia</span></span>`;
     const subtitles=extraLines(p);
     button.innerHTML=image+`<span class="node-names"><span class="node-name">${esc(p.firstName || t('Imię nieznane'))}</span>`+`<span class="node-name">${esc(p.lastName || p.title || '')}</span></span>`+(subtitles.length?`<span class="node-subtitle">${esc(subtitles.filter(s=>s!==p.title).slice(0,2).join(' · '))}</span>`:'')+`<span class="node-dates">${esc(life(p))}</span>`;
-    button.addEventListener('click',()=>{if(!dragWasMoved)openPerson(p.id);});
+    button.addEventListener('click',()=>{if(!dragWasMoved){if(lineage.people.has(p.id))openPerson(p.id);else highlightPerson(p.id);}});
     $('people').append(button);GenealogyCardView.fit(button);personButtons.set(p.id,button);
   }
   const author=fullName(people.get(G.data.rootPersonId));$('author-name').textContent=author;$('go-root').textContent=people.get(G.data.rootPersonId).firstName||t('Osoba główna');document.title=t('Moje drzewo genealogiczne')+' · '+author;
@@ -244,7 +250,7 @@
   }
   const search=$('person-search'),results=$('search-results');
   function closeSearch(){responsive.closeSearch();results.hidden=true;search.setAttribute('aria-expanded','false');}
-  search.addEventListener('input',()=>{const query=normal(search.value.trim());if(!query){closeSearch();return;}const matches=[...people.values()].filter(p=>normal(I.searchText(p,G)).includes(query));results.innerHTML=matches.length?matches.map(p=>`<button type="button" data-result="${p.id}">${esc(shortName(p))}<small>${esc(life(p))}${display(p).maidenName?' · '+esc(t('z domu {value}',{value:display(p).maidenName})):''}</small></button>`).join(''):'<p class="no-results">Nie znaleziono osoby.</p>';results.hidden=false;search.setAttribute('aria-expanded','true');I.dom(results);results.querySelectorAll('button').forEach(button=>button.onclick=()=>{const id=button.dataset.result;closeSearch();search.value='';focusPerson(id,1);openPerson(id);});});
+  search.addEventListener('input',()=>{const query=normal(search.value.trim());if(!query){closeSearch();return;}const matches=[...people.values()].filter(p=>normal(I.searchText(p,G)).includes(query));results.innerHTML=matches.length?matches.map(p=>`<button type="button" data-result="${p.id}">${esc(shortName(p))}<small>${esc(life(p))}${display(p).maidenName?' · '+esc(t('z domu {value}',{value:display(p).maidenName})):''}</small></button>`).join(''):'<p class="no-results">Nie znaleziono osoby.</p>';results.hidden=false;search.setAttribute('aria-expanded','true');I.dom(results);results.querySelectorAll('button').forEach(button=>button.onclick=()=>{const id=button.dataset.result;closeSearch();search.value='';focusPerson(id,1);highlightPerson(id);personButtons.get(id)?.focus({preventScroll:true});});});
   search.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();if(e.key==='ArrowDown'){e.preventDefault();results.querySelector('button')?.focus();}if(e.key==='Enter')results.querySelector('button')?.click();});
   document.addEventListener('click',e=>{if(!responsive.mobile&&!e.target.closest('.search-box'))closeSearch();});
   responsive.onChange(()=>{cardLayout.setMobile(responsive.mobile);});

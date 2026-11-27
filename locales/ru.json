@@ -33,7 +33,6 @@
   "Ponów": "Повторить",
   "Układ początkowy": "Исходное расположение",
   "Interaktywne drzewo genealogiczne": "Интерактивное генеалогическое дерево",
-  "Mysz: karta w lewo / w prawo · Tło: całe drzewo · Kliknięcie: szczegóły": "Мышь: карточка влево / вправо · Фон: всё дерево · Щелчок: подробности",
   "Linia ojca": "Ветка отца",
   "Linia matki": "Ветка матери",
   "Małżeństwo": "Брак",
@@ -201,7 +200,6 @@
   "Układ działa, ale przeglądarka nie mogła go zapisać na później.": "Расположение работает, но браузер не смог его сохранить.",
   "Przywrócono początkowy układ. Możesz cofnąć tę zmianę.": "Исходное расположение восстановлено. Эту правку можно отменить.",
   "Nieprawidłowe tłumaczenie.": "Неверный перевод.",
-  "Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.": "Перетаскивание двигает всё дерево. Нажатие открывает карточку.",
   "Drzewo rodzinne": "Семейное дерево",
   "Zamknij menu": "Закрыть меню",
   "Zamknij wyszukiwanie": "Закрыть поиск",
@@ -245,5 +243,9 @@
   "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Сохранено только в этом браузере. Изменения не опубликованы. Скачайте ZIP для переноса копии.",
   "Wyczyść podświetlenie": "Снять подсветку",
   "Podświetlenie wyczyszczone.": "Подсветка снята.",
-  "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa.": "Тёмные карточки выделяют выбранного человека, его предков и потомков. Золотая рамка отмечает выбранного человека, контрастный градиент — прямые линии родства."
+  "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa.": "Тёмные карточки выделяют выбранного человека, его предков и потомков. Золотая рамка отмечает выбранного человека, контрастный градиент — прямые линии родства.",
+  "{value}. Podświetl linię rodzinną": "{value}. Выделить семейную цепочку",
+  "Podświetlono linię osoby {value}. Naciśnij ciemną kartę, aby otworzyć szczegóły.": "Выделена цепочка: {value}. Нажмите тёмную карточку, чтобы открыть детали.",
+  "Przeciąganie przesuwa drzewo. Jasna karta: podświetl linię. Ciemna karta: otwórz szczegóły.": "Перетаскивание двигает дерево. Светлая карточка: выделить цепочку. Тёмная: открыть детали.",
+  "Jasna karta: podświetl linię · Ciemna karta: szczegóły · Tło: przesuń drzewo": "Светлая карточка: выделить цепочку · Тёмная: детали · Фон: переместить дерево"
 }

@@ -54,7 +54,7 @@ window.GenealogyCardLayout = (() => {
       toggle.setAttribute('aria-pressed',String(enabled));toggle.textContent=enabled?'Przesuwanie kart: włączone':'Przesuwanie kart: wyłączone';
       document.getElementById('viewport').classList.toggle('cards-draggable',enabled);
       undoButton.disabled=!undo.length||!!active;redoButton.disabled=!redo.length||!!active;resetButton.disabled=same(positions(model),basePositions())||!!active;
-      document.getElementById('layout-hint').textContent=enabled?'Przesuwaj w obrębie rodziny. Aktualni małżonkowie przesuwają się razem.':'Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.';
+      document.getElementById('layout-hint').textContent=enabled?'Przesuwaj w obrębie rodziny. Aktualni małżonkowie przesuwają się razem.':'Przeciąganie przesuwa drzewo. Jasna karta: podświetl linię. Ciemna karta: otwórz szczegóły.';
       document.getElementById('layout-backup-notice').hidden=!previous;
       document.getElementById('mobile-layout-exit').hidden=!enabled;
       document.body.classList.toggle('mobile-arranging',enabled&&window.GenealogyResponsive?.mobile);window.GenealogyI18n?.dom();

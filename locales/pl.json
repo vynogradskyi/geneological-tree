@@ -33,7 +33,6 @@
   "Ponów": "Ponów",
   "Układ początkowy": "Układ początkowy",
   "Interaktywne drzewo genealogiczne": "Interaktywne drzewo genealogiczne",
-  "Mysz: karta w lewo / w prawo · Tło: całe drzewo · Kliknięcie: szczegóły": "Mysz: karta w lewo / w prawo · Tło: całe drzewo · Kliknięcie: szczegóły",
   "Linia ojca": "Linia ojca",
   "Linia matki": "Linia matki",
   "Małżeństwo": "Małżeństwo",
@@ -201,7 +200,6 @@
   "Układ działa, ale przeglądarka nie mogła go zapisać na później.": "Układ działa, ale przeglądarka nie mogła go zapisać na później.",
   "Przywrócono początkowy układ. Możesz cofnąć tę zmianę.": "Przywrócono początkowy układ. Możesz cofnąć tę zmianę.",
   "Nieprawidłowe tłumaczenie.": "Nieprawidłowe tłumaczenie.",
-  "Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.": "Przeciąganie przesuwa całe drzewo. Kliknięcie otwiera kartę.",
   "Drzewo rodzinne": "Drzewo rodzinne",
   "Zamknij menu": "Zamknij menu",
   "Zamknij wyszukiwanie": "Zamknij wyszukiwanie",
@@ -245,5 +243,9 @@
   "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.",
   "Wyczyść podświetlenie": "Wyczyść podświetlenie",
   "Podświetlenie wyczyszczone.": "Podświetlenie wyczyszczone.",
-  "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa.": "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa."
+  "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa.": "Ciemne karty wyróżniają wybraną osobę, jej przodków i potomków. Złota ramka wskazuje wybraną osobę, a kontrastowy gradient — bezpośrednie linie pokrewieństwa.",
+  "{value}. Podświetl linię rodzinną": "{value}. Podświetl linię rodzinną",
+  "Podświetlono linię osoby {value}. Naciśnij ciemną kartę, aby otworzyć szczegóły.": "Podświetlono linię osoby {value}. Naciśnij ciemną kartę, aby otworzyć szczegóły.",
+  "Przeciąganie przesuwa drzewo. Jasna karta: podświetl linię. Ciemna karta: otwórz szczegóły.": "Przeciąganie przesuwa drzewo. Jasna karta: podświetl linię. Ciemna karta: otwórz szczegóły.",
+  "Jasna karta: podświetl linię · Ciemna karta: szczegóły · Tło: przesuń drzewo": "Jasna karta: podświetl linię · Ciemna karta: szczegóły · Tło: przesuń drzewo"
 }
