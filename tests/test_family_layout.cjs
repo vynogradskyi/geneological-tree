@@ -48,3 +48,22 @@ layout=check(multiple);assert.notEqual(layout.nodes.child.x,layout.nodes.sibling
 assert.equal(JSON.stringify(create(multiple)),JSON.stringify(layout),'Deterministic reset geometry');
 const bad=structuredClone(data);bad.people.find(p=>p.id==='mmm').Mommy='root';assert.throws(()=>create(bad),/pokolenia/);
 console.log('Family layout: child axes, vertical legs, chains, spouses, siblings, uneven branches, reset, bounds and unchanged records verified.');
+
+// Independent families occupy their own child spans, with a movable parent.
+// An unrelated selected/root family must not pull the other children inward.
+for(const rootPersonId of ['a1','b1','outside']) {
+ const separate={rootPersonId,people:[person('pa'),person('pb'),person('a1','pa'),person('a2','pa'),person('b1','pb'),person('b2','pb'),person('grandchild','a1'),person('outside')],relationships:[]};
+ const n=check(separate).nodes;
+ for(const [parent,kids] of [['pa',['a1','a2']],['pb',['b1','b2']]]) {
+  const midpoint=(n[kids[0]].x+n[kids[1]].x)/2;
+  assert(Math.abs(n[parent].x-midpoint)<1,'A movable parent centres on its own child span');
+ }
+ const a=['a1','a2'].map(id=>n[id].x),b=['b1','b2'].map(id=>n[id].x);
+ assert(Math.max(...a)+224<=Math.min(...b)+1e-5||Math.max(...b)+224<=Math.min(...a)+1e-5,'Independent child spans remain separate');
+}
+const broad={rootPersonId:'leaf',people:[person('ancestor'),...Array.from({length:7},(_,i)=>person('child'+i,'ancestor')),person('leaf','child0'),person('partner'),person('grandchild','child6'),person('greatgrandchild','grandchild')],relationships:[relationship('pair','leaf','partner','trwa')]};
+layout=check(broad);
+const children=broad.people.filter(p=>p.Mommy==='ancestor').map(p=>layout.nodes[p.id].x);
+assert(Math.abs(layout.nodes.ancestor.x-(Math.min(...children)+Math.max(...children))/2)<2,'Broad family parent moves above the children, including the remote descendant chain');
+assert.equal(JSON.stringify(create(broad)),JSON.stringify(layout),'New geometry remains deterministic');
+console.log('Independent child areas, movable broad-family parent, root independence and descendant-chain clearance verified.');

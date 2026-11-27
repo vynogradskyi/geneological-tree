@@ -1,9 +1,10 @@
 /* Deterministic family areas. No names, real-person IDs or inferred marriage status. */
 window.GenealogyFamilyLayout = (() => {
-  const VERSION=4;
+  const VERSION=5;
   // x(child) = mean(x(parents)) for singleton families. Orthogonal projection
   // keeps these equations exact while Hildreth's dual updates enforce row gaps.
-  // This minimizes squared horizontal positions for the selected family order.
+  // Multi-child families minimize their own parent/child displacement, not
+  // distance to a shared row origin. Parents and descendants can both move.
   function alignChildren(layout, people, width, gap, padding, preferences) {
     const ids = Object.keys(layout.nodes).sort();
     const index = new Map(ids.map((id, i) => [id, i]));
@@ -99,6 +100,65 @@ window.GenealogyFamilyLayout = (() => {
       }
       rows[rank] = sorted.flat();
     }
+    // Work in the null space of the exact singleton/adjacency equations.
+    // A positive quadratic metric keeps family centres together while allowing
+    // local deviations required by remarriage and independent branch areas.
+    const tangent = [];
+    for (let i = 0; i < count; i++) {
+      const unit = vector(); unit[i] = 1;
+      const axis = project(unit);
+      for (let pass = 0; pass < 2; pass++) for (const previous of tangent) {
+        const amount = dot(axis, previous);
+        for (let j = 0; j < count; j++) axis[j] -= amount * previous[j];
+      }
+      const length = Math.sqrt(dot(axis, axis));
+      if (length > 1e-8) tangent.push(axis.map(value => value / length));
+    }
+    function familyMetric() {
+      const terms = [];
+      for (const children of families.values()) {
+        const parents = [children[0].Mommy, children[0].Daddy].filter(Boolean);
+        const ordered = children.slice().sort((a,b) => rows[layout.ranks[a.id]].indexOf(a.id) - rows[layout.ranks[b.id]].indexOf(b.id));
+        const normal = vector();
+        for (const parent of parents) normal[index.get(parent)] -= 1 / parents.length;
+        normal[index.get(ordered[0].id)] += .5;
+        normal[index.get(ordered.at(-1).id)] += .5;
+        terms.push({normal, weight: 1});
+        // Shorten the fan without forcing every child onto its parent's X.
+        for (const child of children) {
+          const normal = vector(); normal[index.get(child.id)] = 1;
+          for (const parent of parents) normal[index.get(parent)] -= 1 / parents.length;
+          terms.push({normal, weight: .01 / children.length});
+        }
+      }
+      const size = tangent.length;
+      const matrix = tangent.map((_,i) => tangent.map((_,j) => i === j ? .0001 : 0));
+      const rhs = Array(size).fill(0);
+      for (const {normal,weight} of terms) {
+        const reduced = tangent.map(axis => dot(axis,normal)), offset = dot(normal,origin);
+        for (let i=0;i<size;i++) {
+          rhs[i] -= weight * reduced[i] * offset;
+          for (let j=0;j<=i;j++) matrix[i][j] += weight * reduced[i] * reduced[j];
+        }
+      }
+      for (let i=0;i<size;i++) for (let j=0;j<=i;j++) {
+        let value=matrix[i][j];
+        for (let k=0;k<j;k++) value-=matrix[i][k]*matrix[j][k];
+        matrix[i][j]=i===j?Math.sqrt(Math.max(1e-14,value)):value/matrix[j][j];
+      }
+      function solve(input) {
+        const result=input.slice();
+        for(let i=0;i<size;i++){for(let j=0;j<i;j++)result[i]-=matrix[i][j]*result[j];result[i]/=matrix[i][i];}
+        for(let i=size-1;i>=0;i--){for(let j=i+1;j<size;j++)result[i]-=matrix[j][i]*result[j];result[i]/=matrix[i][i];}
+        return result;
+      }
+      function expand(reduced) {
+        const result=vector();
+        for(let j=0;j<size;j++)for(let i=0;i<count;i++)result[i]+=tangent[j][i]*reduced[j];
+        return result;
+      }
+      return {start:expand(solve(rhs)).map((x,i)=>x+origin[i]), response:normal=>expand(solve(tangent.map(axis=>dot(axis,normal))))};
+    }
     let maxViolation = Infinity;
     const seen = new Set([JSON.stringify(rows)]);
     // Bounded retries can exchange unconstrained neighboring family blocks.
@@ -150,6 +210,58 @@ window.GenealogyFamilyLayout = (() => {
       if (!exchanged) break;
     }
     if (maxViolation > 1e-5) throw Error('Nie można wyrównać rodzin bez nakładania kart. Sprawdź powiązania.');
+    const metric=familyMetric(), refined=metric.start.slice(), constraints=[];
+    function clearance(a,b) {
+      const difference=vector();difference[b]=1;difference[a]=-1;
+      const response=metric.response(difference);
+      constraints.push({a,b,response,norm:dot(difference,response),lambda:0});
+    }
+    for(const row of Object.values(rows))for(let j=1;j<row.length;j++)clearance(index.get(row[j-1]),index.get(row[j]));
+    for(const {person,branch,family} of outerBranches)for(const relative of family)if(!branch.has(relative))clearance(index.get(relative),index.get(person));
+    // Primal active-set QP: start from the verified feasible row layout.
+    // Unlike dual coordinate sweeps this also converges for broad, uneven trees
+    // with a very small compactness weight and long exact singleton chains.
+    for(let i=0;i<count;i++)refined[i]=coordinates[i];
+    const active=[];
+    let converged=false;
+    for(let iteration=0;iteration<10*(count+constraints.length);iteration++) {
+      const factor=active.map(()=>Array(active.length).fill(0)),rhs=[];
+      for(let i=0;i<active.length;i++) {
+        const a=constraints[active[i]];
+        rhs[i]=width+gap-metric.start[a.b]+metric.start[a.a];
+        for(let j=0;j<=i;j++) {
+          const b=constraints[active[j]];
+          let value=b.response[a.b]-b.response[a.a];
+          for(let k=0;k<j;k++)value-=factor[i][k]*factor[j][k];
+          if(i===j&&value<1e-9)throw Error('Zależne ograniczenia układu rodzin.');
+          factor[i][j]=i===j?Math.sqrt(value):value/factor[j][j];
+        }
+      }
+      const multipliers=rhs.slice();
+      for(let i=0;i<active.length;i++){for(let j=0;j<i;j++)multipliers[i]-=factor[i][j]*multipliers[j];multipliers[i]/=factor[i][i];}
+      for(let i=active.length-1;i>=0;i--){for(let j=i+1;j<active.length;j++)multipliers[i]-=factor[j][i]*multipliers[j];multipliers[i]/=factor[i][i];}
+      const optimum=metric.start.slice();
+      for(let j=0;j<active.length;j++)for(let i=0;i<count;i++)optimum[i]+=constraints[active[j]].response[i]*multipliers[j];
+      const direction=optimum.map((x,i)=>x-refined[i]);
+      if(Math.max(...direction.map(Math.abs))<1e-6) {
+        const minimum=Math.min(0,...multipliers);
+        if(minimum>=-1e-7){converged=true;break;}
+        active.splice(multipliers.indexOf(minimum),1);continue;
+      }
+      let amount=1,blocker=-1;
+      for(let j=0;j<constraints.length;j++) {
+        if(active.includes(j)||constraints[j].norm<1e-9)continue;
+        const {a,b}=constraints[j],slope=direction[b]-direction[a];
+        if(slope>=-1e-7)continue;
+        const allowed=Math.max(0,(refined[b]-refined[a]-width-gap)/-slope);
+        if(allowed<amount){amount=allowed;blocker=j;}
+      }
+      for(let i=0;i<count;i++)refined[i]+=amount*direction[i];
+      if(blocker>=0)active.push(blocker);
+    }
+    const residual=Math.max(0,...constraints.map(({a,b})=>width+gap-refined[b]+refined[a]));
+    if(!converged||residual>1e-5)throw Error('Nie można rozmieścić obszarów dzieci. Sprawdź powiązania.');
+    for(let i=0;i<count;i++)coordinates[i]=refined[i];
     // Uniform expansion absorbs floating point gap error and preserves all axes.
     for (let i = 0; i < count; i++) coordinates[i] *= 1 + 1e-7;
     const offset = padding - Math.min(...coordinates);
