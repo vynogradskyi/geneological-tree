@@ -37,15 +37,33 @@
   const svg = $('connections'), personButtons = new Map();
   let colors=GenealogyColors.create(G.data,G.edges,G.presentation);
   const fields=GenealogyFields.create($('family-fields'));
+  let lineage=GenealogyLineage.collect(G.data,G.edges,state.selected);
+  function paintLineage(){
+    lineage=GenealogyLineage.collect(G.data,G.edges,state.selected);state.selected=lineage.selected;
+    for(const[id,button]of personButtons){
+      button.classList.toggle('selected',id===state.selected);
+      button.classList.toggle('lineage-member',lineage.people.has(id));
+      if(id===state.selected)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
+    }
+    svg.querySelectorAll('[data-edge-index]').forEach(path=>path.classList.toggle('lineage-link',lineage.edges.has(+path.dataset.edgeIndex)));
+    $('lineage-controls').hidden=!state.selected;
+  }
+  function selectPerson(id){state.selected=id;paintLineage();}
+  $('clear-lineage').onclick=()=>{const old=state.selected;selectPerson(null);$('announcer').textContent=t('Podświetlenie wyczyszczone.');personButtons.get(old)?.focus({preventScroll:true});};
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&!event.defaultPrevented&&!document.querySelector('dialog[open]')&&!drag){
+      if(state.selected){$('clear-lineage').click();event.preventDefault();}
+    }
+  });
   function paintConnections(){
     fields.update(G,colors);
     svg.replaceChildren();
     const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');svg.append(defs);
     let gradientNumber=0;
-  for (const edge of G.edges) {
+  for (const [edgeIndex,edge] of G.edges.entries()) {
     for (const points of edge.paths) {
       const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d',pathData(points)); path.setAttribute('class',`connection ${edge.kind}`);
+      path.setAttribute('d',pathData(points)); path.setAttribute('class',`connection ${edge.kind}`);path.dataset.edgeIndex=edgeIndex;
       if(edge.kind==='parent'){
         const {from,to}=colors.edge(edge),id='family-color-'+gradientNumber++;
         if(from===to){path.style.stroke=from;svg.append(path);continue;}
@@ -66,7 +84,7 @@
   function updateLayoutView(){
     world.style.width=G.width+'px';world.style.height=G.height+'px';svg.setAttribute('width',G.width);svg.setAttribute('height',G.height);
     for(const[id,node]of Object.entries(G.nodes)){const button=personButtons.get(id);if(button)button.style.left=node.x+'px';}
-    paintConnections();
+    paintConnections();paintLineage();
     updateGenerations();
   }
   function drawTree(){
@@ -93,7 +111,7 @@
   $('go-root').textContent=display(people.get(G.data.rootPersonId)).firstName||t('Osoba główna');
   $('summary').textContent=I.summary(people.size,G.generations);
   $('updated-on').textContent=G.updatedOn;$('mobile-root-name').textContent=fullName(people.get(G.data.rootPersonId));
-  I.dom();generations.refresh();updateGenerations();
+  paintLineage();I.dom();generations.refresh();updateGenerations();
   }
   drawTree();
   let activeCard=null;
@@ -119,7 +137,7 @@
   let drag=null,dragWasMoved=false;
   const pointers=new Map();let pinch=null;
   viewport.addEventListener('pointerdown',e=>{
-    if(e.button!==0||e.target.closest('#mobile-quick-actions,#mobile-layout-exit'))return;
+    if(e.button!==0||e.target.closest('#mobile-quick-actions,#mobile-layout-exit,#lineage-controls'))return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     const card=e.target.closest('.person-node'),canMove=card&&cardLayout.isEnabled()&&(e.pointerType==='mouse'||responsive.mobile);
     drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,x:state.x,y:state.y,mode:canMove?'card':'pan',person:canMove?card.dataset.person:null,cardX:canMove?G.nodes[card.dataset.person].x:null};
@@ -162,8 +180,7 @@
   function openPerson(id,{preserveView=false}={}){
     const previousScroll=personDialog.scrollTop,previousView={...state};
     clearSources();onPersonView();
-    const p=display(people.get(id));state.selected=id;
-    for(const[pid,button]of personButtons)button.classList.toggle('selected',pid===id);
+    const p=display(people.get(id));selectPerson(id);
     const children=[...people.values()].filter(c=>c.Mommy===id||c.Daddy===id).map(c=>c.id);
     const siblings=new Set(p.siblings);
     for(const other of people.values())if(other.id!==id&&((p.Mommy&&other.Mommy===p.Mommy)||(p.Daddy&&other.Daddy===p.Daddy)))siblings.add(other.id);

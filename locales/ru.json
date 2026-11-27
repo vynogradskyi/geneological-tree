@@ -242,5 +242,8 @@
   "Pokolenie {number} z {total}": "Поколение {number} из {total}",
   "Kopia poprzedniego układu": "Копия прежней расстановки",
   "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.": "Не удалось скачать копию расстановки. Она сохранена в браузере.",
-  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Сохранено только в этом браузере. Изменения не опубликованы. Скачайте ZIP для переноса копии."
+  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Сохранено только в этом браузере. Изменения не опубликованы. Скачайте ZIP для переноса копии.",
+  "Wyczyść podświetlenie": "Снять подсветку",
+  "Podświetlenie wyczyszczone.": "Подсветка снята.",
+  "Obramowanie wyróżnia wybraną osobę, jej przodków i potomków; grubsze linie pokazują bezpośrednie pokrewieństwo.": "Рамка выделяет выбранного человека, его предков и потомков; утолщённые линии показывают прямое родство."
 }

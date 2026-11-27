@@ -242,5 +242,8 @@
   "Pokolenie {number} z {total}": "Pokolenie {number} z {total}",
   "Kopia poprzedniego układu": "Kopia poprzedniego układu",
   "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.": "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.",
-  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię."
+  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.",
+  "Wyczyść podświetlenie": "Wyczyść podświetlenie",
+  "Podświetlenie wyczyszczone.": "Podświetlenie wyczyszczone.",
+  "Obramowanie wyróżnia wybraną osobę, jej przodków i potomków; grubsze linie pokazują bezpośrednie pokrewieństwo.": "Obramowanie wyróżnia wybraną osobę, jej przodków i potomków; grubsze linie pokazują bezpośrednie pokrewieństwo."
 }

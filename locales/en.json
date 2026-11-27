@@ -242,5 +242,8 @@
   "Pokolenie {number} z {total}": "Generation {number} of {total}",
   "Kopia poprzedniego układu": "Previous layout backup",
   "Nie udało się pobrać kopii układu. Wcześniejsza kopia pozostaje w przeglądarce.": "Could not download the layout backup. It remains saved in this browser.",
-  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Saved only in this browser. Changes have not been published. Download a ZIP to transfer a copy."
+  "Zapisano tylko w tej przeglądarce. Zmiany nie zostały opublikowane. Pobierz ZIP, aby przenieść kopię.": "Saved only in this browser. Changes have not been published. Download a ZIP to transfer a copy.",
+  "Wyczyść podświetlenie": "Clear highlighting",
+  "Podświetlenie wyczyszczone.": "Highlighting cleared.",
+  "Obramowanie wyróżnia wybraną osobę, jej przodków i potomków; grubsze linie pokazują bezpośrednie pokrewieństwo.": "Borders highlight the selected person, their ancestors and descendants; thicker lines show direct parentage."
 }
