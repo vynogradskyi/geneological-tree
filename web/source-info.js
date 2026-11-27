@@ -8,7 +8,9 @@ window.GenealogySourceInfo = (() => {
     function close(){pinned=false;panel.hidden=true;button.setAttribute('aria-expanded','false');}
     function show(){
       const anchor=button.getBoundingClientRect(),hero=root.closest('.details-hero').getBoundingClientRect();
-      panel.style.top=(anchor.bottom-hero.top)+'px';
+      const top=Math.max(16,Math.min(anchor.bottom,window.innerHeight-96));
+      panel.style.top=(top-hero.top)+'px';
+      panel.style.maxHeight=Math.max(60,Math.min(340,window.innerHeight-top-16))+'px';
       panel.hidden=false;button.setAttribute('aria-expanded','true');
     }
     root.addEventListener('pointerenter',event=>{if(event.pointerType==='touch')return;hovered=true;show();},options);
@@ -19,7 +21,10 @@ window.GenealogySourceInfo = (() => {
     dialog.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden){event.preventDefault();event.stopImmediatePropagation();button.focus({preventScroll:true});close();}}, {...options,capture:true});
     document.addEventListener('click',event=>{if(!root.contains(event.target))close();},{...options,capture:true});
     dialog.addEventListener('close',close,options);
-    return ()=>{close();controller.abort();};
+    window.addEventListener('resize',()=>{requestAnimationFrame(()=>{if(!panel.hidden)show();});},options);
+    const observer=window.ResizeObserver?new ResizeObserver(()=>{if(!panel.hidden)show();}):null;
+    observer?.observe(root.closest('.details-hero'));
+    return ()=>{close();controller.abort();observer?.disconnect();};
   }
   return {mount};
 })();
