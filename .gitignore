@@ -29,3 +29,6 @@ ui-debug*.log
 /family-translations.json
 /family-presentation.json
 /data/tree*.json
+
+# Беклог хранится только локально (решение владельца 27.11.2026)
+/sdlc/backlog.md
