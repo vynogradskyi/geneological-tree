@@ -27,6 +27,13 @@ jobs:
           node --check web/viewer-storage.js
           node tests/test_card_layout.cjs
           python3 tests/test_hosted_build.py
+      - name: Editor and browser regression tests (synthetic data only)
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet -r requirements.txt 'playwright>=1.49,<2'
+          mkdir -p tmp
+          .venv/bin/python tests/test_editor.py
+          .venv/bin/python tests/test_e2e.py
       - name: Build code with existing Firebase data and photos
         run: python3 scripts/build_hosted.py --source https://familytree-9505c.web.app
       - name: Deploy to Firebase Hosting

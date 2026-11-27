@@ -1,0 +1,15 @@
+{
+  "language": "pl",
+  "isExample": false,
+  "issues": [
+    {
+      "id": "issue_0001",
+      "personIds": [
+        "person_0006"
+      ],
+      "status": "otwarte",
+      "question": "Syntetyczne pytanie testowe: data urodzenia?"
+    }
+  ],
+  "photoCredits": []
+}

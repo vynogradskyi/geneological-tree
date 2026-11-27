@@ -1,0 +1,164 @@
+{
+ "size": {
+  "width": 1336,
+  "height": 1280
+ },
+ "cards": {
+  "person_0001": {
+   "x": 736,
+   "y": 904,
+   "w": 200,
+   "h": 312,
+   "generation": 0,
+   "branch": "root",
+   "color": "#637e84"
+  },
+  "person_0002": {
+   "x": 960,
+   "y": 484,
+   "w": 200,
+   "h": 312,
+   "generation": 1,
+   "branch": "father",
+   "color": "#6e72a4"
+  },
+  "person_0003": {
+   "x": 736,
+   "y": 484,
+   "w": 200,
+   "h": 312,
+   "generation": 1,
+   "branch": "mother",
+   "color": "#588761"
+  },
+  "person_0004": {
+   "x": 960,
+   "y": 904,
+   "w": 200,
+   "h": 312,
+   "generation": 0,
+   "branch": "other",
+   "color": "#637e84"
+  },
+  "person_0005": {
+   "x": 400,
+   "y": 64,
+   "w": 200,
+   "h": 312,
+   "generation": 2,
+   "branch": "mother",
+   "color": "#73884e"
+  },
+  "person_0006": {
+   "x": 624,
+   "y": 64,
+   "w": 200,
+   "h": 312,
+   "generation": 2,
+   "branch": "mother",
+   "color": "#338572"
+  },
+  "person_0007": {
+   "x": 848,
+   "y": 64,
+   "w": 200,
+   "h": 312,
+   "generation": 2,
+   "branch": "father",
+   "color": "#4979aa"
+  },
+  "person_0008": {
+   "x": 1072,
+   "y": 64,
+   "w": 200,
+   "h": 312,
+   "generation": 2,
+   "branch": "father",
+   "color": "#8b6a9e"
+  },
+  "person_0009": {
+   "x": 288,
+   "y": 484,
+   "w": 200,
+   "h": 312,
+   "generation": 1,
+   "branch": "mother",
+   "color": "#588761"
+  },
+  "person_0010": {
+   "x": 400,
+   "y": 904,
+   "w": 200,
+   "h": 312,
+   "generation": 0,
+   "branch": "mother",
+   "color": "#708c75"
+  },
+  "person_0011": {
+   "x": 512,
+   "y": 484,
+   "w": 200,
+   "h": 312,
+   "generation": 1,
+   "branch": "mother",
+   "color": "#879088"
+  },
+  "person_0012": {
+   "x": 64,
+   "y": 484,
+   "w": 200,
+   "h": 312,
+   "generation": 1,
+   "branch": "mother",
+   "color": "#879088"
+  }
+ },
+ "rows": {
+  "0": [
+   "person_0010",
+   "person_0001",
+   "person_0004"
+  ],
+  "1": [
+   "person_0012",
+   "person_0009",
+   "person_0011",
+   "person_0003",
+   "person_0002"
+  ],
+  "2": [
+   "person_0005",
+   "person_0006",
+   "person_0007",
+   "person_0008"
+  ]
+ },
+ "edges": {
+  "parent": 14,
+  "marriage": 5
+ },
+ "lineage": {
+  "person_0001": [
+   "person_0001",
+   "person_0002",
+   "person_0003",
+   "person_0005",
+   "person_0006",
+   "person_0007",
+   "person_0008"
+  ],
+  "person_0003": [
+   "person_0001",
+   "person_0003",
+   "person_0004",
+   "person_0005",
+   "person_0006"
+  ],
+  "person_0009": [
+   "person_0005",
+   "person_0006",
+   "person_0009",
+   "person_0010"
+  ]
+ }
+}
