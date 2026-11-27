@@ -35,5 +35,27 @@ window.GenealogyLineage = (() => {
     });
     return result;
   }
-  return {collect};
+  function paint(svg, edges, line) {
+    svg.querySelector('.lineage-overlay')?.remove();
+    if(!line.selected)return;
+    const ns='http://www.w3.org/2000/svg',make=tag=>document.createElementNS(ns,tag);
+    const group=make('g'),defs=make('defs');group.setAttribute('class','lineage-overlay');group.setAttribute('aria-hidden','true');group.append(defs);
+    for(const index of line.edges)for(const [part,points] of edges[index].paths.entries()) {
+      const gradient=make('linearGradient'),id=`lineage-accent-${index}-${part}`;
+      gradient.id=id;gradient.setAttribute('gradientUnits','userSpaceOnUse');
+      for(const [key,value] of Object.entries({x1:points[0][0],y1:points[0][1],x2:points.at(-1)[0],y2:points.at(-1)[1]}))gradient.setAttribute(key,value);
+      for(const [offset,color] of [['0%','#51e0d5'],['48%','#a7a3ff'],['100%','#ffd17a']]) {
+        const stop=make('stop');stop.setAttribute('offset',offset);stop.setAttribute('stop-color',color);gradient.append(stop);
+      }
+      defs.append(gradient);
+      const d=`M ${points[0].join(' ')} C ${points.slice(1).map(point=>point.join(' ')).join(' ')}`;
+      for(const style of ['halo','gradient']) {
+        const path=make('path');path.setAttribute('d',d);path.setAttribute('class','lineage-'+style);path.setAttribute('vector-effect','non-scaling-stroke');
+        if(style==='gradient')path.setAttribute('stroke',`url(#${id})`);
+        group.append(path);
+      }
+    }
+    svg.append(group);
+  }
+  return {collect,paint};
 })();

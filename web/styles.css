@@ -37,10 +37,18 @@
 
 .details-hero{position:relative}.person-title{display:flex;align-items:center;gap:8px}.person-title h2{flex:1;min-width:0;overflow-wrap:anywhere}.source-info{flex:none}.source-info-button{display:grid;place-items:center;min-width:44px;min-height:44px;padding:6px;border:0;background:transparent;font-size:23px}.sources-popover{position:absolute;left:20px;right:20px;z-index:4;max-height:min(340px,45dvh);overflow:auto;overscroll-behavior:contain;padding:18px;background:#fffefc;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 28px #172c2430;overflow-wrap:anywhere;letter-spacing:normal}.sources-popover[hidden]{display:none}.sources-popover h3{margin:0 0 12px;font-size:13px}.sources-popover:focus-visible{outline:3px solid #c08b32}.mobile-view .details-hero .person-title{grid-column:2;align-self:end}.mobile-view .person-title h2{font-size:25px;line-height:1.12}
 
-/* Direct-line emphasis supplements the existing family palette. */
-.person-node.lineage-member{box-shadow:inset 0 0 0 3px #40584e,0 2px 5px #1c332b09}
-.person-node.lineage-member.selected{box-shadow:inset 0 0 0 5px #95610f,0 2px 5px #1c332b09}
-.connection.parent.lineage-link{stroke-width:4.5;stroke-linecap:round}
+/* Temporary dark cards make the direct line readable even in the overview.
+   The original family band and unfiltered portrait keep their meaning. */
+.person-node.lineage-member,.person-node.lineage-member:hover{background:linear-gradient(155deg,#23434b,#11282f 75%);color:#f5faf8;border-color:#8de0d5;box-shadow:inset 0 0 0 2px #72c5bc,0 4px 12px #102c3440}
+.person-node.lineage-member .node-subtitle{color:#d0e1dd}
+.person-node.lineage-member .node-photo{background:#2b454d}
+.person-node.lineage-member .node-placeholder{color:#d0e1dd}
+.person-node.lineage-member.selected{background:linear-gradient(155deg,#3b4742,#142d32 75%);border-color:#ffd17a;outline:4px solid #ca8b26;outline-offset:4px;box-shadow:inset 0 0 0 3px #ffd17a,0 4px 16px #132f3659}
+.person-node.lineage-member:focus-visible{outline:3px solid #fff;outline-offset:8px}
+.lineage-overlay{pointer-events:none}
+.lineage-halo,.lineage-gradient{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.lineage-halo{stroke:#17363f;stroke-width:min(56px,calc(7px / var(--lineage-scale,1)))}
+.lineage-gradient{stroke-width:min(28px,calc(3.5px / var(--lineage-scale,1)))}
 .lineage-controls{position:absolute;right:12px;top:12px;z-index:6;max-width:calc(100% - 70px);cursor:default}
 .lineage-controls[hidden]{display:none}
 .lineage-controls button{min-height:44px;box-shadow:0 2px 8px #17351e20;white-space:normal;font-size:13px}

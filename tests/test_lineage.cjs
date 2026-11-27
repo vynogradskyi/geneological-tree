@@ -26,3 +26,29 @@ line=collect(edited,edges,'chosen');assert(!line.people.has('child'));assert(!li
 const cycle={people:[p('a','b'),p('b','c'),p('c','a')]};
 line=collect(cycle,[], 'a');assert.equal(line.people.size,3);
 console.log('Direct lineage: unlimited ancestors/descendants, shared paths, no sideways expansion, exact junction halves, reset, active-data changes and cycle guard verified.');
+
+// Overlay paths follow only the collected segments, including rerouted moves;
+// changing or clearing selection must remove the previous geometry/gradients.
+class Element {
+ constructor(tag){this.tag=tag;this.attrs={};this.children=[];}
+ setAttribute(key,value){this.attrs[key]=String(value);}
+ append(child){child.parent=this;this.children.push(child);}
+ remove(){this.parent.children=this.parent.children.filter(child=>child!==this);}
+ querySelector(selector){return this.children.find(child=>'.'+child.attrs.class===selector)||null;}
+}
+context.document={createElementNS:(_,tag)=>new Element(tag)};
+const svg=new Element('svg'),routed=[...edges.map(e=>({...e,paths:[[[10,20],[10,40],[50,60],[50,80]]]}))];
+line=collect(data,routed,'chosen');const canonical=JSON.stringify(routed);
+context.window.GenealogyLineage.paint(svg,routed,line);
+let overlay=svg.querySelector('.lineage-overlay');
+assert.equal(overlay.children.filter(el=>el.tag==='path').length,line.edges.size*2);
+assert.equal(overlay.children[0].children.length,line.edges.size,'One gradient per highlighted segment');
+for(const el of overlay.children.filter(el=>el.tag==='path'))assert.equal(el.attrs['vector-effect'],'non-scaling-stroke','Overview accents retain a visible screen width');
+routed[0].paths=[[[100,20],[100,40],[150,60],[150,80]]];
+context.window.GenealogyLineage.paint(svg,routed,line);
+assert.equal(svg.children.length,1,'Repaint replaces rather than stacks old overlays');
+overlay=svg.querySelector('.lineage-overlay');assert.equal(overlay.children.find(el=>el.tag==='path').attrs.d,'M 100 20 C 100 40 150 60 150 80');
+assert.equal(JSON.stringify(edges),JSON.stringify(JSON.parse(before).edges));
+context.window.GenealogyLineage.paint(svg,routed,collect(data,routed,null));assert.equal(svg.children.length,0,'Clear removes the accent and its gradients');
+assert.notEqual(JSON.stringify(routed),canonical,'Synthetic move really changed geometry');
+console.log('Lineage overlay: exact paths, visible overview widths, rerouted coordinates, replacement and complete clearing verified.');

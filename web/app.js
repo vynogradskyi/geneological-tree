@@ -46,6 +46,7 @@
       if(id===state.selected)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
     }
     svg.querySelectorAll('[data-edge-index]').forEach(path=>path.classList.toggle('lineage-link',lineage.edges.has(+path.dataset.edgeIndex)));
+    GenealogyLineage.paint(svg,G.edges,lineage);
     $('lineage-controls').hidden=!state.selected;
   }
   function selectPerson(id){state.selected=id;paintLineage();}
@@ -116,7 +117,7 @@
   drawTree();
   let activeCard=null;
   const cardLayout=GenealogyCardLayout.create({model:G,onChange:updateLayoutView,onMessage:message,onActiveChange:id=>{if(activeCard)personButtons.get(activeCard)?.classList.remove('is-dragging');activeCard=id;if(id)personButtons.get(id)?.classList.add('is-dragging');viewport.classList.toggle('card-drag-active',!!id);}});
-  function transform(){world.style.transform=`translate(${state.x}px,${state.y}px) scale(${state.scale})`;$('zoom-label').textContent=Math.round(state.scale*100)+'%';updateGenerations();}
+  function transform(){svg.style.setProperty('--lineage-scale',state.scale);world.style.transform=`translate(${state.x}px,${state.y}px) scale(${state.scale})`;$('zoom-label').textContent=Math.round(state.scale*100)+'%';updateGenerations();}
   function focusPerson(id, scale=1){const n=G.nodes[id];state.scale=scale;state.x=viewArea().centerX-(n.x+n.w/2)*scale;state.y=Math.min(viewport.clientHeight*.72,viewport.clientHeight-n.h*scale/2-(responsive.mobile?88:24))-(n.y+n.h/2)*scale;transform();}
   function zoom(factor,x=viewArea().centerX,y=viewport.clientHeight/2){const old=state.scale;state.scale=Math.max(.01,Math.min(2.5,old*factor));state.x=x-(x-state.x)*state.scale/old;state.y=y-(y-state.y)*state.scale/old;transform();}
   $('zoom-in').onclick=()=>zoom(1.25);$('zoom-out').onclick=()=>zoom(.8);
