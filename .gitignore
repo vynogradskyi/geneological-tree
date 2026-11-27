@@ -20,7 +20,7 @@ ui-debug*.log
 /family-tree.json
 /family-tree-review.json
 /web/family-data.js
-/task.md
+/sdlc/task.md
 /sources/
 /photos/*
 !/photos/.gitkeep
