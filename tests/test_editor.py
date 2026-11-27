@@ -78,7 +78,8 @@ class EditorPersistenceTest(unittest.TestCase):
         for lang in ('ru','en'):
             copy_=json.loads(family_store.information_path(self.root,lang).read_text())
             self.assertEqual(next(p for p in copy_['people'] if p['id']=='person_0055')['birthDate'],'1975-02-12','Language copies follow the Polish facts')
-        self.assertFalse((self.root/'data').exists(),'Site snapshots are not written into the project')
+        # Compare names exactly: on case-insensitive file systems (macOS) 'data' would match 'Data'.
+        self.assertNotIn('data',[p.name for p in self.root.iterdir()],'Site snapshots are not written into the project')
         pl_path=family_store.information_path(self.root)
         self.assertIn('Osoba Testowa',(self.root/'web/family-data.js').read_text());self.assertEqual(state['sourceSha256'],hashlib.sha256(pl_path.read_bytes()).hexdigest())
         before=pl_path.read_bytes()

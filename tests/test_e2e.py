@@ -81,7 +81,10 @@ class Page:
         self.page.on('pageerror', lambda error: self.errors.append(str(error)))
         self.page.on('console', lambda msg: msg.type == 'error' and 'favicon' not in msg.text
                      and 'Failed to load resource' not in msg.text and self.errors.append(msg.text))
+        # On 127.0.0.1 the viewer probes the local editor server (web/editor-storage.js); the static
+        # test server answers 404 and the page falls back to read-only, as the published site does.
         self.page.on('response', lambda r: r.status >= 400 and not r.url.endswith('favicon.ico')
+                     and not (r.status == 404 and r.url == URL + 'api/state')
                      and self.errors.append(f'HTTP {r.status} {r.url}'))
 
     def open(self, path=''):
