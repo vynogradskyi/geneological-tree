@@ -21,7 +21,7 @@ Data/
     family-tree.schema.json   схема всех трёх файлов (единственный файл Data/ в Git)
   Photos/                     фотографии; в записях — "photos/<файл>"
   Project/                    family-tree-review.json (вопросы, журнал), family-presentation.json (настройки раскладки)
-  Sources/                    исходные документы и скриншоты
+  Sources/                    присланные оригиналы и подтверждения: <дата>_<ID>/
   Backups/                    резервные копии, которые редактор делает перед каждым сохранением
 ```
 

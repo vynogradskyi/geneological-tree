@@ -281,7 +281,10 @@ class Details(E2ETestCase):
         expect(self.page.locator('#person-name')).to_have_text('Krystyna Obca')
         self.assertTrue(self.ui.dialog_open())
 
-    def test_TC_DET_04_sources_popover_and_links(self):
+    def test_TC_DET_04_photo_credit_popover_and_links(self):
+        details = self.ui.open_details(AUNT)
+        self.assertEqual(details.locator('.source-info-button').count(), 0, 'ⓘ только у фото с атрибуцией')
+        self.page.keyboard.press('Escape')
         details = self.ui.open_details(ROOT_ID)
         panel = details.locator('#person-sources')
         details.locator('.source-info-button').click()

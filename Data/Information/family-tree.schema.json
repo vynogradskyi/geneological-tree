@@ -139,7 +139,6 @@
         "Daddy",
         "siblings",
         "photo",
-        "sources",
         "notes",
         "birthDate",
         "deathDate",
@@ -219,14 +218,6 @@
             "null"
           ],
           "pattern": "^photos/[^/\\\\]+\\.[A-Za-z0-9]+$"
-        },
-        "sources": {
-          "description": "Źródła informacji: osoba przekazująca dane, dokument lub inny materiał. Należy wskazać, jakie dane potwierdza źródło. Opisy w języku polskim.",
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
         },
         "notes": {
           "description": "Uzupełnienia, przybliżone daty, rozbieżności i pytania do dalszych badań. Tekst w języku polskim.",
@@ -346,8 +337,7 @@
         "status",
         "startYear",
         "endYear",
-        "previousRelationshipId",
-        "sources"
+        "previousRelationshipId"
       ],
       "properties": {
         "id": {
@@ -392,13 +382,6 @@
           ],
           "pattern": "^relation_[0-9]{4,}$",
           "description": "Wcześniejsze małżeństwo jednego z małżonków, jeśli kolejność jest znana."
-        },
-        "sources": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
         }
       }
     },

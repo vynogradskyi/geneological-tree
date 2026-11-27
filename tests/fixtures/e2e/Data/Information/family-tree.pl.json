@@ -30,10 +30,6 @@
       "Daddy": "person_0002",
       "siblings": [],
       "photo": "photos/person_0001.png",
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny.",
-        "Strona źródłowa: https://example.org/zrodlo-testowe."
-      ],
       "notes": "Notatka testowa <img src=x onerror=\"window.__xss=1\"> pozostaje zwykłym tekstem."
     },
     {
@@ -62,9 +58,6 @@
       "Daddy": "person_0008",
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null,
       "occupation": "Inżynier testów"
     },
@@ -96,9 +89,6 @@
         "person_0009"
       ],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -127,9 +117,6 @@
       "Daddy": "person_0002",
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -158,9 +145,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -189,9 +173,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -220,9 +201,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -251,9 +229,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null,
       "deathDateNote": "około"
     },
@@ -285,9 +260,6 @@
         "person_0003"
       ],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -316,9 +288,6 @@
       "Daddy": "person_0011",
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -347,9 +316,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     },
     {
@@ -378,9 +344,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane testowe QA — nie opisują prawdziwej rodziny."
-      ],
       "notes": null
     }
   ],
@@ -395,8 +358,7 @@
       "status": "trwa",
       "startYear": null,
       "endYear": null,
-      "previousRelationshipId": null,
-      "sources": []
+      "previousRelationshipId": null
     },
     {
       "id": "relation_0002",
@@ -408,8 +370,7 @@
       "status": "trwa",
       "startYear": null,
       "endYear": null,
-      "previousRelationshipId": null,
-      "sources": []
+      "previousRelationshipId": null
     },
     {
       "id": "relation_0003",
@@ -421,8 +382,7 @@
       "status": "rozwiedzeni",
       "startYear": null,
       "endYear": null,
-      "previousRelationshipId": null,
-      "sources": []
+      "previousRelationshipId": null
     },
     {
       "id": "relation_0004",
@@ -434,8 +394,7 @@
       "status": "trwa",
       "startYear": null,
       "endYear": null,
-      "previousRelationshipId": null,
-      "sources": []
+      "previousRelationshipId": null
     },
     {
       "id": "relation_0005",
@@ -447,8 +406,7 @@
       "status": "zakończone",
       "startYear": null,
       "endYear": null,
-      "previousRelationshipId": null,
-      "sources": []
+      "previousRelationshipId": null
     }
   ]
 }

@@ -55,7 +55,7 @@
 | `Data/Information/family-tree.schema.json` | Схема всех трёх файлов (единственный файл `Data/` в Git) |
 | `Data/Photos/` | Сохранённые фотографии; в записях — `photos/<файл>` |
 | `Data/Project/` | `family-tree-review.json` (вопросы, журнал), `family-presentation.json` (настройки отображения) |
-| `Data/Sources/`, `Data/Backups/` | Исходные материалы; резервные копии редактора |
+| `Data/Sources/`, `Data/Backups/` | Присланные оригиналы и подтверждения владельца по папкам `<дата>_<ID>`; резервные копии редактора |
 | Локальная `web/family-data.js` | Подготовленный снимок дерева для `file://` с расположением карточек и миниатюрами |
 | Firebase Hosting | Опубликованный снимок данных (`data/tree*.json`, `web/family-data.js`), назначенные фото (`photos/`) и код просмотрщика |
 | `output/`, `tmp/`, `_to_delete/` | Сборки, временная работа и файлы, ожидающие ручного удаления; исключены из Git |

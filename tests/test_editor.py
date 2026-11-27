@@ -36,8 +36,7 @@ class EditorPersistenceTest(unittest.TestCase):
                 person['Daddy'] = 'person_0053'
             data['people'].append(person)
         data['relationships'] = [dict(id=f'relation_{i:04d}',type='małżeństwo',personIds=ids,
-                                     status=None,startYear=None,endYear=None,previousRelationshipId=None,
-                                     sources=['Syntetyczne dane testowe.'])
+                                     status=None,startYear=None,endYear=None,previousRelationshipId=None)
                                  for i,ids in enumerate([['person_0002','person_0003'],['person_0006','person_0007']],1)]
         review = json.loads((ROOT/'examples/family-tree-review.example.json').read_text())
         review['summary']['totalPeople'] = len(data['people'])
@@ -69,7 +68,7 @@ class EditorPersistenceTest(unittest.TestCase):
         self.handler.save_person(bio)
         self.assertEqual([r['id'] for r in self.data()['relationships']], order)
         req=self.request();req['person']['firstName']='Osoba Testowa';req['person']['birthDate']='1975-02-12';req['person']['birthYear']=1975;req['person']['isLiving']=True
-        req['person']['sources']=['Ręczna informacja testowa'];req['person']['notes']='Test zapisu danych.'
+        req['person']['notes']='Test zapisu danych.'
         photo=(self.root/family_store.PHOTOS/'test-portrait.png').read_bytes()
         req['photo']={'name':'photo.png','dataUrl':'data:image/png;base64,'+base64.b64encode(photo).decode()}
         state=self.handler.save_person(req);saved=next(p for p in self.data()['people'] if p['id']=='person_0055')
@@ -98,7 +97,7 @@ class EditorPersistenceTest(unittest.TestCase):
         other=next(p for p in self.data()['people'] if p['id']=='person_0040');self.assertIn('person_0055',other['siblings'])
         req=self.request();req['person']['siblings']=[];self.handler.save_person(req)
         other=next(p for p in self.data()['people'] if p['id']=='person_0040');self.assertNotIn('person_0055',other['siblings'])
-        req=self.request();req['marriages']=[dict(id='relation_0007',type='małżeństwo',personIds=['person_0055','person_0040'],status=None,startYear=None,endYear=None,previousRelationshipId=None,sources=['Test ręcznego zapisu.'])];self.handler.save_person(req)
+        req=self.request();req['marriages']=[dict(id='relation_0007',type='małżeństwo',personIds=['person_0055','person_0040'],status=None,startYear=None,endYear=None,previousRelationshipId=None)];self.handler.save_person(req)
         self.assertEqual(len(self.data()['relationships']),3)
         req=self.request();req['marriages']=[];req['person']['Daddy']=None;state=self.handler.save_person(req)
         self.assertIn('person_0055',state['disconnectedPeople'])

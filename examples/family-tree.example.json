@@ -30,9 +30,6 @@
       "Daddy": "person_0002",
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane demonstracyjne, nie opisują prawdziwej rodziny."
-      ],
       "notes": "Przykład do sprawdzenia działania aplikacji."
     },
     {
@@ -61,9 +58,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane demonstracyjne, nie opisują prawdziwej rodziny."
-      ],
       "notes": "Przykład do sprawdzenia działania aplikacji."
     },
     {
@@ -92,9 +86,6 @@
       "Daddy": null,
       "siblings": [],
       "photo": null,
-      "sources": [
-        "Syntetyczne dane demonstracyjne, nie opisują prawdziwej rodziny."
-      ],
       "notes": "Przykład do sprawdzenia działania aplikacji."
     }
   ],

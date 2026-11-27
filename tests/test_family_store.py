@@ -16,7 +16,7 @@ def person(pid, **values):
     record = {'id': pid, 'firstName': 'Anna', 'lastName': 'Testowa', 'patronymic': None, 'maidenName': None,
               'formerLastNames': [], 'birthYear': 1950, 'deathYear': None, 'isLiving': None,
               'birthPlace': {'city': 'Kraków', 'country': 'Polska', 'region': None}, 'Mommy': None, 'Daddy': None,
-              'siblings': [], 'photo': None, 'sources': ['Syntetyczne dane.'], 'notes': 'Notatka po polsku.',
+              'siblings': [], 'photo': None, 'notes': 'Notatka po polsku.',
               'birthDate': '1950', 'deathDate': None, 'deathPlace': {'city': None, 'country': None, 'region': None}}
     record.update(values)
     return record

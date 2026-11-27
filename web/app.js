@@ -163,7 +163,6 @@
   viewport.addEventListener('wheel',e=>{e.preventDefault();const r=viewport.getBoundingClientRect();if(e.ctrlKey||e.metaKey){zoom(Math.exp(-e.deltaY*.008),e.clientX-r.left,e.clientY-r.top);}else{state.x-=e.deltaX;state.y-=e.deltaY;transform();}},{passive:false});
   function relationButton(id){const p=people.get(id);return `<button class="relative-link" type="button" data-relative="${id}">${esc(shortName(p))}${p.birthYear?` <small>(${p.birthYear})</small>`:''}</button>`;}
   function relativeRow(label, ids){return `<div class="relative-row"><span>${esc(label)}</span><div class="relative-list">${ids.length?ids.map(relationButton).join(''):'<span class="unknown">brak danych</span>'}</div></div>`;}
-  function linkify(text){return esc(text).replace(/https?:\/\/[^\s<>]+/g,url=>{const clean=url.replace(/[.,;]$/,'');return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>`+url.slice(clean.length);});}
   let onPersonView = () => {},clearSources=()=>{};
   function openPerson(id,{preserveView=false}={}){
     const previousScroll=personDialog.scrollTop,previousView={...state};
@@ -183,8 +182,8 @@
     if(p.deathCircumstances)facts.push(['Okoliczności śmierci',p.deathCircumstances]);
     if(p.patronymic)facts.push(['Imię odojcowskie',p.patronymic]);
     if(p.formerLastNames.length)facts.push(['Poprzednie nazwiska',p.formerLastNames.join(', ')]);
-    const sourceContent=`<h3>Źródła informacji</h3><ol class="sources">${p.sources.map(s=>`<li>${linkify(s)}</li>`).join('')}</ol>${G.credits.filter(c=>c.personId===id).map(c=>`<p class="photo-credit">Wcześniej wskazane źródło zdjęcia: <a href="${esc(c.sourcePage)}" target="_blank" rel="noopener noreferrer">${esc(c.author)}</a> · <a href="${esc(c.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(c.license)}</a>. Obecny plik dostarczony przez użytkownika.</p>`).join('')}`;
-    const hasSources=p.sources.length||G.credits.some(c=>c.personId===id);
+    const sourceContent=`${G.credits.filter(c=>c.personId===id).map(c=>`<p class="photo-credit">Wcześniej wskazane źródło zdjęcia: <a href="${esc(c.sourcePage)}" target="_blank" rel="noopener noreferrer">${esc(c.author)}</a> · <a href="${esc(c.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(c.license)}</a>. Obecny plik dostarczony przez użytkownika.</p>`).join('')}`;
+    const hasSources=G.credits.some(c=>c.personId===id);
     const sourceInfo=hasSources?`<div class="source-info"><button class="source-info-button" type="button" aria-label="Źródła informacji" aria-expanded="false" aria-controls="person-sources"><span aria-hidden="true">ⓘ</span></button><section id="person-sources" class="sources-popover" role="region" aria-label="Źródła informacji" tabindex="0" hidden>${sourceContent}</section></div>`:'';
     $('person-details').innerHTML=`<section class="details-hero">${portrait}<div class="person-title"><h2 id="person-name">${esc(shortName(p))}</h2>${sourceInfo}</div><p class="hero-life">${esc(life(p))}</p>${p.maidenName?`<p class="detail-subtitle">z domu ${esc(p.maidenName)}</p>`:''}${[p.title,p.occupation].filter(Boolean).map(t=>`<span class="role-label">${esc(t)}</span>`).join('')}${I.hasStale(people.get(id),G)?`<p class="translation-notice">${esc(t('Brak aktualnego tłumaczenia — pokazano tekst polski.'))}</p>`:''}${G.disconnectedPeople?.includes(p.id)?'<p class="issue">Brak ustalonego połączenia z osobą główną. Sprawdź powiązania rodzinne.</p>':''}</section>`+
       `<section class="details-section life-section"><h3>Życie</h3><dl class="facts">${facts.map(([label,value])=>`<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`).join('')}</dl></section>`+
